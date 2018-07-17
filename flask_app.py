@@ -177,7 +177,7 @@ def index():
 
     else:
         db = get_db()
-        entries = db.execute('select name from leaderboard order by raw_total asc')
+        entries = db.execute('select name from inputs')
         flash('Full picks will be displayed once tournament begins.')
 
     return render_template('show_entries.html', entries=entries)

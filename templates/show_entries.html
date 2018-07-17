@@ -1,12 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
 <div id="page-content-wrapper">
-   <div class = 'span5 offset2'>
-   <!-- <div class = 'container-fluid2'> -->
+   <div class = 'span offset2 '>
     {% for message in get_flashed_messages() %}
-        <div class='flash'>{{ message }}</div>
+        <div class='flash gap-30'>{{ message }}</div>
     {% endfor %}
-    <table>
+	<table>
       <thead>
       <tr>
       <th class = 'text-center'>Position</th>
