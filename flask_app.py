@@ -74,7 +74,7 @@ def close_db(error):
 
 @app.route('/',methods=["GET", "POST"])
 def index():
-    golive = datetime(2018,7,19,0,0)
+    golive = datetime(2018,7,19,5,0)
 
     if datetime.now() > golive:
         db = get_db()
@@ -225,7 +225,7 @@ def admin():
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_entry():
-    godown = datetime(2018,7,19,0,0)
+    godown = datetime(2018,7,19,5,0)
     if datetime.today() < godown:
     	db = get_db()
     	cur = db.execute('select PLAYER from golfers')
