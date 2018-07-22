@@ -153,7 +153,7 @@ def index():
         	scores.sort()
         	total = sum(scores[:5])
         	df_entries['raw_total'][x]=int(total)
-        df_entries['pos']=df_entries['raw_total'].rank(ascending=1)
+        df_entries['pos']=df_entries['raw_total'].rank(ascending=1,method='min')
         df_entries.to_sql('leaderboard',db,if_exists='replace')
         cur = db.execute('select * from leaderboard order by raw_total asc')
         entries = [dict(Name=row[1],
