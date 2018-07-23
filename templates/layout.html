@@ -9,22 +9,71 @@
 <!-- Latest compiled and minified CSS -->
 <link href="../static/css/bootstrap.css" rel="stylesheet">
 <style type="text/css">
-   body { background: #b8b8b8 !important; } /* Adding !important forces the browser to overwrite the default style applied by Bootstrap */
-   .gap-10 {
-   				width:100%;
-   				height:10px;
-			}
-	.gap-20 {
-   				width:100%;
-   				height:20px;
-   			}
-   	.gap-30 {
-   				width:100%;
-   				height:50px;
-   			}
+body { 
+	background: #ffffff !important; 
+} /* Adding !important forces the browser to overwrite the default style applied by Bootstrap */
+
+.gap-10 {
+			width:100%;
+			height:10px;
+		}
+.gap-20 {
+			width:100%;
+			height:20px;
+		}
+.gap-30 {
+			width:100%;
+			height:50px;
+		}
+* { 
+	font-family: font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	font-weight: 350;
+	box-sizing: border-box;
+}
+
+#myInput {
+	background-image: url('static/css/searchicon.png');
+	background-position: 10px 10px;
+	background-repeat: no-repeat;
+	width: 100%;
+	font-size: 16px;
+	padding: 12px 20px 12px 40px;
+	border: 1px solid #ddd;
+	margin-bottom: 12px;
+}
+
+#myTable {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+#myTable2 {
+  border-collapse: collapse;
+  width: 60%;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+#myTable th {
+  text-align: left;
+  padding: 12px;
+  font-weight: 550;
+}
+
+#myTable tr {
+  border-bottom: 1px solid #ddd;
+  background-color: #ffff;
+}
+
+#myTable tr.header, #myTable tr:hover {
+  background-color: #f1f1f1;
+}
+
 </style>
 <div class = 'span2'>
-  <img src = 'http://fanfood.com/wp-content/uploads/2013/06/The_Open_Championship.png' class="img-responsive" style="padding-top: 5px">
+  <img src = '/static/pgabellerive.png' class="img-responsive" style="padding-top: 5px"> 
 </div>
 <!-- <div class='container-fluid3'> -->
   <nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse">
@@ -42,5 +91,6 @@
 <body class = 'view'>
 {% block body %}
 {% endblock %}
+
 </body>
 </html>

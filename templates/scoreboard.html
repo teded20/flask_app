@@ -1,13 +1,13 @@
 {% extends "layout.html" %}
 {% block body %}
  <div class= 'span5 offset2'> <!--id='wrapper'> -->
- <table>
+ <table id = 'myTable' style = 'width: 60%'>
       <thead>
-      <tr>
-      <th class = 'text-center'>POS</th>
-      <th class = 'text-center'>Player</th>
-      <th class = 'text-center'>To Par</th>
-      <th class = 'text-center'>Thru</th>
+      <tr class = 'header'>
+      <th>POS</th>
+      <th>Player</th>
+      <th>To Par</th>
+      <th>Thru</th>
       </tr>
       </thead>
       {% for score in scores %}
