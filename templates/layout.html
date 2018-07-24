@@ -9,6 +9,83 @@
 <!-- Latest compiled and minified CSS -->
 <link href="../static/css/bootstrap.css" rel="stylesheet">
 <style type="text/css">
+
+.nav {
+  margin: 0 auto;
+  padding: 1px 1px;
+  width: 75%;
+ }
+
+.navbar {
+  background-color: #5c5c5c;
+}
+.navbar .navbar-brand {
+  color: #d2d4d4;
+}
+.navbar .navbar-brand:hover,
+.navbar .navbar-brand:focus {
+  color: #e9eaec;
+}
+.navbar .navbar-text {
+  color: #d2d4d4;
+/*  display: inline-block;
+*/  padding: 5px 5px;
+  color: #fff;
+  text-decoration: none;
+  border-right: 1px solid;
+}
+.navbar .navbar-text a {
+  color: #e9eaec;
+  display: inline-block;
+  padding: 5px 10px;
+  color: #fff;
+  text-decoration: none;
+  border-right: 1px solid;
+}
+.navbar .navbar-text a:hover,
+.navbar .navbar-text a:focus {
+/*	  color: #e9eaec;
+*/	}
+.navbar .navbar-nav .nav-link {
+  color: #d2d4d4;
+  border-radius: .25rem;
+  /*margin: 0 0.25em;*/
+}
+.navbar .navbar-nav .nav-link:not(.disabled):hover,
+.navbar .navbar-nav .nav-link:not(.disabled):focus {
+  color: #5c5c5c;
+}
+.navbar .navbar-nav .nav-item.active .nav-link,
+.navbar .navbar-nav .nav-item.active .nav-link:hover,
+.navbar .navbar-nav .nav-item.active .nav-link:focus,
+.navbar .navbar-nav .nav-item.show .nav-link,
+.navbar .navbar-nav .nav-item.show .nav-link:hover,
+.navbar .navbar-nav .nav-item.show .nav-link:focus {
+  color: #000000;
+  background-color: #000000;
+}
+.navbar .navbar-toggle {
+  border-color: #9a9a9a;
+}
+.navbar .navbar-toggle:hover,
+.navbar .navbar-toggle:focus {
+  background-color: #9a9a9a;
+}
+.navbar .navbar-toggle .navbar-toggler-icon {
+  color: #d2d4d4;
+}
+.navbar .navbar-collapse,
+.navbar .navbar-form {
+  border-color: #d2d4d4;
+}
+.navbar .navbar-link {
+  color: #d2d4d4;
+}
+.navbar .navbar-link:hover {
+  color: #e9eaec;
+}
+
+
 body { 
 	background: #ffffff !important; 
 } /* Adding !important forces the browser to overwrite the default style applied by Bootstrap */
@@ -32,7 +109,7 @@ body {
 }
 
 #myInput {
-	background-image: url('static/css/searchicon.png');
+	background-image: url('static/searchicon.png');
 	background-position: 10px 10px;
 	background-repeat: no-repeat;
 	width: 100%;
@@ -72,21 +149,20 @@ body {
 }
 
 </style>
-<div class = 'span2'>
-  <img src = '/static/pgabellerive.png' class="img-responsive" style="padding-top: 5px"> 
+
+<div class = 'container'>
+  <img src = '/static/pgabellerive.png' class="img-responsive" style="max-width: 1200px padding-top: 5px padding-bottom: 5px"> 
 </div>
-<!-- <div class='container-fluid3'> -->
-  <nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse">
-  	<div> <!-- class='navbar-collapse collapse'> -->
+<nav class="navbar navbar-dark bg-dark">
+  	<div> 
   		<ul class='nav navbar-nav'>
-		    <li><a class="navbar-brand" href="/">Leaderboard</a></li>
-		    <li><a class="navbar-brand" href="/scoreboard">Raw Scores</a></li>
-		    <li><a class="navbar-brand" href="/add">Entry</a></li>
+		    <li><a class="nav-link" href="/">Leaderboard</a></li>
+		    <li><a class="nav-link" href="/scoreboard">Raw Scores</a></li>
+		    <li><a class="nav-link" href="/add">Entry</a></li>
 	    </ul>
     </div>
   </nav>
-<!-- </div>
- --></head>
+</head>
 <body class = 'view'>
 {% block body %}
 {% endblock %}

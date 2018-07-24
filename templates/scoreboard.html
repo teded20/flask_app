@@ -1,7 +1,8 @@
 {% extends "layout.html" %}
 {% block body %}
- <div class= 'span5 offset2'> <!--id='wrapper'> -->
- <table id = 'myTable' style = 'width: 60%'>
+<div id="page-content-wrapper" >
+<input type='text' id='myInput' onkeyup='myFunction()' placeholder='Search for names..' title='Type in a name' class = 'text-align:center'>
+ <table id = 'myTable'>
       <thead>
       <tr class = 'header'>
       <th>POS</th>
@@ -19,17 +20,26 @@
       </tr>
     {% endfor %}
 </table>
-<!--    <div class="container-fluid2">
-      <ul class="sidebar-nav">
-        <li class="sidebar-brand">
-            <a href="#">Leaderboard</a>
-        </li>
-        {% for score in scores %}
-        <li>
-            <a>{{ score.pos }} - {{ score.player }} ({{ score.to_par }})</a>
-        </li>
-        {% endfor %}
-      </ul>
-  </div>  -->
+<input type='text' style = 'width: 60%' id='myInput' onkeyup='myFunction()' placeholder='Search for names..' title='Type in a name'>
 </div>
+
+<script>
+function myFunction() {
+  var input, filter, table, tr, td, i;
+  input = document.getElementById('myInput');
+  filter = input.value.toUpperCase();
+  table = document.getElementById("myTable");
+  tr = table.getElementsByTagName("tr");
+  for (i = 0; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[1];
+    if (td) {
+      if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }       
+  }
+}
+</script>
 {% endblock %}
