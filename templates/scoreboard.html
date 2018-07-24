@@ -1,26 +1,31 @@
 {% extends "layout.html" %}
 {% block body %}
-<div id="page-content-wrapper" >
-<input type='text' id='myInput' onkeyup='myFunction()' placeholder='Search for names..' title='Type in a name' class = 'text-align:center'>
- <table id = 'myTable'>
-      <thead>
-      <tr class = 'header'>
-      <th>POS</th>
-      <th>Player</th>
-      <th>To Par</th>
-      <th>Thru</th>
-      </tr>
-      </thead>
-      {% for score in scores %}
-      <tr class = 'rows'>
-        <td class='r0 text-center' font-weight: bold> {{ score.pos }}</td>
-        <td class='r0 text-center' font-weight: bold> {{ score.player }}</td>
-        <td class='r1 text-center'> {{ score.to_par }}</td>
-        <td class='r2 text-center'> {{ score.thru }} </td>
-      </tr>
-    {% endfor %}
-</table>
-<input type='text' style = 'width: 60%' id='myInput' onkeyup='myFunction()' placeholder='Search for names..' title='Type in a name'>
+<div id="container" >
+    <div class = 'row'>
+        <div class='col-sm-3'></div>
+        <div class = 'col-sm-6'>
+            <input type='text' id='myInput' onkeyup='myFunction()' placeholder='Search for names..' title='Type in a name' class = 'text-align:center'>
+             <table id = 'myTable'>
+                  <thead>
+                  <tr class = 'header'>
+                  <th>POS</th>
+                  <th>Player</th>
+                  <th>To Par</th>
+                  <th>Thru</th>
+                  </tr>
+                  </thead>
+                  {% for score in scores %}
+                  <tr class = 'rows'>
+                    <td class='r0 text-center' font-weight: bold> {{ score.pos }}</td>
+                    <td class='r0 text-center' font-weight: bold> {{ score.player }}</td>
+                    <td class='r1 text-center'> {{ score.to_par }}</td>
+                    <td class='r2 text-center'> {{ score.thru }} </td>
+                  </tr>
+                {% endfor %}
+            </table>
+            <input type='text' style = 'width: 60%' id='myInput' onkeyup='myFunction()' placeholder='Search for names..' title='Type in a name'>
+</div>
+</div>
 </div>
 
 <script>
@@ -38,7 +43,7 @@ function myFunction() {
       } else {
         tr[i].style.display = "none";
       }
-    }       
+    }
   }
 }
 </script>
