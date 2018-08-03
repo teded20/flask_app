@@ -10,6 +10,8 @@ from datetime import datetime,timedelta
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 import sys
 
+#with app.app_context():
+
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
@@ -74,7 +76,7 @@ def close_db(error):
 
 @app.route('/',methods=["GET", "POST"])
 def index():
-    golive = datetime(2018,7,19,5,0)
+    golive = datetime(2018,8,2,5,0)
 
     if datetime.now() > golive:
         db = get_db()
@@ -89,8 +91,8 @@ def index():
         nowtime = datetime.today()
         delt = nowtime - lasttime
 
-        if delt > timedelta(0,1):
-            url = "http://www.espn.com/golf/leaderboard?tournamentId=401025259" #Open Championship
+        if delt > timedelta(0,10):
+            url = "http://www.espn.com/golf/leaderboard?tournamentId=401025261" #Open Championship
             page = requests.get(url)
             soup = BeautifulSoup(page.content,'html.parser')
             names = soup.findAll('a',{'class':'full-name'})
@@ -123,7 +125,8 @@ def index():
             golfers.to_sql('golfers',db,if_exists = 'replace')
 
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
-            df = df.convert_objects(convert_numeric=True)
+            df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
+            # df['TO_PAR'].apply(pd.to_numeric, errors='ignore', downcast='integer')
             if df.loc[0,'POS'] != df.loc[1,'POS']:
                 df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
             if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
@@ -225,7 +228,7 @@ def admin():
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_entry():
-    godown = datetime(2018,7,19,5,0)
+    godown = datetime(2018,8,3,5,0)
     if datetime.today() < godown:
     	db = get_db()
     	cur = db.execute('select PLAYER from golfers')
