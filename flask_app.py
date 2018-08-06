@@ -76,7 +76,7 @@ def close_db(error):
 
 @app.route('/',methods=["GET", "POST"])
 def index():
-    golive = datetime(2018,8,2,5,0)
+    golive = datetime(2018,8,9,5,0)
 
     if datetime.now() > golive:
         db = get_db()
@@ -92,7 +92,7 @@ def index():
         delt = nowtime - lasttime
 
         if delt > timedelta(0,10):
-            url = "http://www.espn.com/golf/leaderboard?tournamentId=401025261" #Open Championship
+            url = "http://www.espn.com/golf/leaderboard?tournamentId=401025263" #PGA Championship
             page = requests.get(url)
             soup = BeautifulSoup(page.content,'html.parser')
             names = soup.findAll('a',{'class':'full-name'})
@@ -110,19 +110,6 @@ def index():
             df.to_sql('raw_scores',db,if_exists ='replace')
             df['POS'] = df['POS'].str.replace('T','')
 
-            # Run once to get golfers populated in golfers table
-            top20url = 'http://www.owgr.com/ranking?pageNo=1&pageSize=300&country=All'
-            top20page = requests.get(top20url)
-            top20soup = BeautifulSoup(top20page.content,'html.parser')
-            names = top20soup.findAll('td',{'class':'name'})
-            rankings = []
-            for x in range(0,len(names)):
-                rankings.append([str(names[x].getText()),int(x+1)])
-            rank_dict = dict(rankings)
-            golfers = df.drop(['POS','TO_PAR','THRU'],1)
-            golfers['RANK'] = golfers.PLAYER.map(rank_dict)
-            golfers = golfers.sort_values('RANK',ascending=True)
-            golfers.to_sql('golfers',db,if_exists = 'replace')
 
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
             df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
@@ -228,9 +215,22 @@ def admin():
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_entry():
-    godown = datetime(2018,8,3,5,0)
+    godown = datetime(2018,8,9,5,0)
     if datetime.today() < godown:
     	db = get_db()
+    	
+    	top20url = 'http://www.owgr.com/en/Events/EventResult.aspx?eventid=7125'
+    	top20page = requests.get(top20url)
+    	top20soup = BeautifulSoup(top20page.content,'html.parser')
+    	names = top20soup.findAll('td',{'class':'name'})
+    	rankings = []
+    	for x in range(0,len(names)):
+    		rankings.append([str(names[x].getText()),int(x+1)])
+    	column_headers = ['PLAYER','RANK']
+    	field = pd.DataFrame(rankings,columns=column_headers)
+    	field = field.sort_values('RANK',ascending=True)
+    	field.to_sql('golfers',db,if_exists = 'replace')
+    	
     	cur = db.execute('select PLAYER from golfers')
     	df_top20 = pd.DataFrame(cur.fetchall(),columns=['name'])
     	top20 = df_top20['name'].tolist()[:20]
