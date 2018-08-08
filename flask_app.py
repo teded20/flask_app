@@ -189,7 +189,7 @@ def login():
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
 	db = get_db()
-	df_entries = pd.read_sql_query("select * from inputs where paid = 'N'",db)
+	df_entries = pd.read_sql_query("select name from inputs where paid = 'N'",db)
 	if df_entries.empty:
 		flash('There are no unpaid entries.')
 	unpaid = df_entries['name'].values.tolist()
@@ -201,6 +201,7 @@ def admin():
 		    db.commit()
 		return redirect(url_for('admin'))
 	cur2 = db.execute('select * from inputs')
+	num = db.execute('select count(*) from inputs').fetchone()[0]
 	entries = [dict(Name=row[0],
             Golfer1=row[1],
             Golfer2=row[3],
@@ -210,7 +211,7 @@ def admin():
             Golfer6=row[11],
             Birdies=int(row[13]),
             paid=row[14]) for row in cur2.fetchall()]
-	return render_template('admin.html',unpaid=unpaid, entries=entries)
+	return render_template('admin.html',unpaid=unpaid, entries=entries, num=num)
 
 
 @app.route('/add', methods=['GET', 'POST'])
