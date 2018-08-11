@@ -121,11 +121,11 @@ def index():
             if df.loc[0,'POS'] != df.loc[1,'POS']:
                 df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
             # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-            # if (datetime.now() > datetime(2018,8,11,16,0):
-            #     df_cut = df.sort_values('POS',ascending=False)
-            #     df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
-            #     cut_score = int(df_cut.iloc[0]['TO_PAR'] + 2)
-            #     df['TO_PAR'] = df['TO_PAR'].fillna(cut_score)
+            if datetime.now() > datetime(2018,8,11,16,0):
+                df_cut = df.sort_values('POS',ascending=False)
+                df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
+                cut_score = int(df_cut.iloc[0]['TO_PAR'] + 2)
+                df['TO_PAR'] = df['TO_PAR'].fillna(cut_score)
             df = df.drop(['POS','THRU'],1)
             df.to_sql('scores',db,if_exists ='replace')
             db.execute('update datetime set last_run = ?',(datetime.today(),))
