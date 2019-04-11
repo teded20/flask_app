@@ -99,7 +99,7 @@ def index():
             delt = nowtime - lasttime
 
             if delt > timedelta(0,10):
-                url = "http://www.espn.com/golf/leaderboard/_/tournamentId/401056526"
+                url = "http://www.espn.com/golf/leaderboard/_/tournamentId/401056527"
                 page = requests.get(url)
                 soup = BeautifulSoup(page.content,'html.parser')
                 rows = soup.find_all('tr')
