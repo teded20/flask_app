@@ -75,11 +75,11 @@ def close_db(error):
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
-@app.errorhandler(404)
-def page_not_found(e):
-    msg = Message("Hello",sender="from@example.com",recipients=["tsedwards17@gmail.com"])
-    mail.send(msg)
-    return render_template("404.html")
+# @app.errorhandler(404)
+# def page_not_found(e):
+#     msg = Message("Hello",sender="from@example.com",recipients=["tsedwards17@gmail.com"])
+#     mail.send(msg)
+#     return render_template("404.html")
 
 
 @app.route('/',methods=["GET", "POST"])
@@ -108,7 +108,7 @@ def index():
                 cells = rows[10].find_all('td')
                 leaderboard = []
                 if len(cells[0].get_text()) > 5:
-                    for x in range(0,len(rows)-1):
+                    for x in range(0,len(rows)):
                         if len(rows[x]) == 1:
                             continue
                         cells = rows[x].find_all('td')
@@ -132,15 +132,17 @@ def index():
                         cells = rows[x].find_all('td')
                         leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
                 #leaderboard.append([len(pos)+1,'Louis Oosthuizen','CUT','WD'])
-                #for x in range(0,len(leaderboard)):
-                #    if leaderboard[x][1]=='Alexander Noren':
-                #        leaderboard[x][1] = 'Alex Noren'
+                for x in range(0,len(leaderboard)):
+                    if leaderboard[x][1]=='Alexander Noren':
+                        leaderboard[x][1] = 'Alex Noren'
+                    if leaderboard[x][1]=='Rafael Cabrera Bello':
+                        leaderboard[x][1] = 'Rafa Cabrera Bello'
                 #    if leaderboard[x][1]=='Haotong Li':
                 #        leaderboard[x][0]=len(pos)
                 #        leaderboard[x][2]='CUT'
                 #        leaderboard[x][3]='WD'
                 df=pd.DataFrame(leaderboard,columns = column_headers)
-                #df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
+                df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
                 df['POS'] = df['POS'].str.replace('T','')
                 df['PLAYER'] = df['PLAYER'].str.replace(' (a)','')
                 df['PLAYER'] = df['PLAYER'].str.replace('-','')
@@ -156,6 +158,7 @@ def index():
                     df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
                     df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
 
+                df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
                 df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
                 if df.loc[0,'POS'] != df.loc[1,'POS']:
                     df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
