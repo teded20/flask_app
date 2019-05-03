@@ -114,19 +114,19 @@ def index():
                         cells = rows[x].find_all('td')
                         leaderboard.append(['-',cells[0].get_text(),'-',cells[1].get_text()])
                 elif len(cells[1].get_text()) > 5:
-                    for x in range(0,len(rows)-1):
+                    for x in range(0,len(rows)):
                         if len(rows[x]) == 1:
                             continue
                         cells = rows[x].find_all('td')
                         leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),cells[4].get_text()])
                 elif len(cells[2].get_text()) > 5:
-                    for x in range(0,len(rows)-1):
+                    for x in range(0,len(rows)):
                         if len(rows[x]) == 1:
                             continue
                         cells = rows[x].find_all('td')
                         leaderboard.append([cells[0].get_text(),cells[2].get_text(),cells[3].get_text(),cells[5].get_text()])
                 else:
-                    for x in range(0,len(rows)-1):
+                    for x in range(0,len(rows)):
                         if len(rows[x]) == 1:
                             continue
                         cells = rows[x].find_all('td')
@@ -150,7 +150,7 @@ def index():
                 df['TO_PAR']=df['TO_PAR'].str.replace('WD','0')
 
                 # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-                if datetime.now() > datetime(2019,4,13,5,0):
+                if datetime.now() > datetime(2019,4,12,5,0):
                     #df_cut = df.sort_values('POS',ascending=False)
                     not_cut = df[df.POS != '-']
                     # df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
@@ -158,7 +158,7 @@ def index():
                     df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
                     df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
 
-                df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
+                #df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
                 df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
                 if df.loc[0,'POS'] != df.loc[1,'POS']:
                     df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
