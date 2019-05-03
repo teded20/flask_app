@@ -9,12 +9,12 @@ from flask_mail import Mail, Message
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
 
-golive = datetime(2019,4,11,5,0)
+golive = datetime(2019,5,3,5,0)
 
 app = Flask(__name__)
 mail = Mail(app)
 
-#app.config["DEBUG"] = True
+# app.config["DEBUG"] = True
 
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'flask_app.db'),
@@ -84,14 +84,17 @@ def close_db(error):
 
 @app.route('/',methods=["GET", "POST"])
 def index():
+	
+    # db = get_db()
+    # db.execute('delete from inputs') # for when starting new tournament
+    # db.execute('delete from golfers')
+    # db.execute('delete from leaderboard')
+    # db.execute('delete from raw_scores')
+    # db.commit()
+
     try:
         if datetime.now() > golive:
             db = get_db()
-
-            # db.execute('delete from inputs') # for when starting new tournament
-            # db.execute('delete from golfers')
-            # db.execute('delete from leaderboard')
-            # db.commit()
 
             lasttime = db.execute('select * from datetime').fetchone()[0]
             lasttime = datetime.strptime(lasttime,'%Y-%m-%d %H:%M:%S.%f')
@@ -99,7 +102,7 @@ def index():
             delt = nowtime - lasttime
 
             if delt > timedelta(0,10):
-                url = "http://www.espn.com/golf/leaderboard/_/tournamentId/401056527"
+                url = "http://www.espn.com/golf/leaderboard/_/tournamentId/401056550"
                 page = requests.get(url)
                 soup = BeautifulSoup(page.content,'html.parser')
                 rows = soup.find_all('tr')
@@ -137,6 +140,8 @@ def index():
                         leaderboard[x][1] = 'Alex Noren'
                     if leaderboard[x][1]=='Rafael Cabrera Bello':
                         leaderboard[x][1] = 'Rafa Cabrera Bello'
+                    if leaderboard[x][1]=='Alvaro Ortiz (a)':
+                        leaderboard[x][1] = 'Alvaro Ortiz Becerra'
                 #    if leaderboard[x][1]=='Haotong Li':
                 #        leaderboard[x][0]=len(pos)
                 #        leaderboard[x][2]='CUT'
@@ -281,7 +286,7 @@ def add_entry():
     if datetime.today() < golive:
     	db = get_db()
 
-    	top20url = 'http://www.owgr.com/en/Events/EventResult.aspx?eventid=7388'
+    	top20url = 'http://www.owgr.com/en/Events/EventResult.aspx?eventid=7417'
     	top20page = requests.get(top20url)
     	top20soup = BeautifulSoup(top20page.content,'html.parser')
     	names = top20soup.findAll('td',{'class':'name'})
@@ -314,7 +319,18 @@ def add_entry():
     			and (request.form.get('name') != '')
     			and (request.form.get('birdies') != '')
     			and (request.form.get('email') != '')):
-    				db.execute('insert into inputs (name, email, golfer1, golfer2, golfer3, golfer4, golfer5, golfer6, paid, birdies) values (?, ?, ?, ?, ?, ?, ?, ?, ?,?)',[request.form.get('name').title(), request.form.get('email'), request.form.get('golfer1'), request.form.get('golfer2'),request.form.get('golfer3'),request.form.get('golfer4'),request.form.get('golfer5'),request.form.get('golfer6'),'N',request.form.get('birdies')])
+    				df_rankings = pd.read_sql_query('select * from golfers',db)
+    				my_dict = dict(zip(df_rankings.PLAYER,df_rankings.RANK))
+    				d = {'PLAYER':[request.form.get('golfer1'),request.form.get('golfer2'),request.form.get('golfer3'),request.form.get('golfer4'),request.form.get('golfer5'),request.form.get('golfer6')]}
+    				print(d)
+    				df = pd.DataFrame(data=d)
+    				print(df.to_string())
+    				df['RANK']=df.PLAYER.map(my_dict)
+    				print(df.to_string())
+    				df = df.sort_values('RANK').reset_index(drop=True)
+    				print(df.to_string())
+    				print(df.PLAYER[0],df.PLAYER[1])
+    				db.execute('insert into inputs (name, email, golfer1, golfer2, golfer3, golfer4, golfer5, golfer6, paid, birdies) values (?, ?, ?, ?, ?, ?, ?, ?, ?,?)',[request.form.get('name').title(), request.form.get('email'), df.PLAYER[0], df.PLAYER[1],df.PLAYER[2],df.PLAYER[3],df.PLAYER[4],df.PLAYER[5],'N',request.form.get('birdies')])
     				db.commit()
     				flash('Your entry was successfully posted')
     		elif ((request.form.get('golfer1') == request.form.get('golfer2')) or (request.form.get('golfer1') == request.form.get('golfer3')) or (request.form.get('golfer2') == request.form.get('golfer3')) or (request.form.get('golfer4') == request.form.get('golfer5')) or (request.form.get('golfer4') == request.form.get('golfer6')) or (request.form.get('golfer5') == request.form.get('golfer6'))):
