@@ -9,7 +9,7 @@ from flask_mail import Mail, Message
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
 
-golive = datetime(2019,5,3,5,0)
+golive = datetime(2019,5,16,5,0)
 
 app = Flask(__name__)
 mail = Mail(app)
@@ -84,7 +84,7 @@ def close_db(error):
 
 @app.route('/',methods=["GET", "POST"])
 def index():
-	
+
     # db = get_db()
     # db.execute('delete from inputs') # for when starting new tournament
     # db.execute('delete from golfers')
@@ -102,7 +102,7 @@ def index():
             delt = nowtime - lasttime
 
             if delt > timedelta(0,10):
-                url = "http://www.espn.com/golf/leaderboard/_/tournamentId/401056550"
+                url = "http://www.espn.com/golf/leaderboard/_/tournamentId/401056552"
                 page = requests.get(url)
                 soup = BeautifulSoup(page.content,'html.parser')
                 rows = soup.find_all('tr')
