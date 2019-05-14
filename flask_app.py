@@ -286,18 +286,18 @@ def add_entry():
     if datetime.today() < golive:
     	db = get_db()
 
-    	top20url = 'http://www.owgr.com/en/Events/EventResult.aspx?eventid=7417'
-    	top20page = requests.get(top20url)
-    	top20soup = BeautifulSoup(top20page.content,'html.parser')
-    	names = top20soup.findAll('td',{'class':'name'})
-    	rankings = []
-    	for x in range(0,len(names)):
-    		rankings.append([str(names[x].getText()),int(x+1)])
-    	column_headers = ['PLAYER','RANK']
-    	field = pd.DataFrame(rankings,columns=column_headers)
-    	field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
-    	field = field.sort_values('RANK',ascending=True)
-    	field.to_sql('golfers',db,if_exists = 'replace')
+    	# top20url = 'http://www.owgr.com/en/Events/EventResult.aspx?eventid=7417'
+#     	top20page = requests.get(top20url)
+#     	top20soup = BeautifulSoup(top20page.content,'html.parser')
+#     	names = top20soup.findAll('td',{'class':'name'})
+#     	rankings = []
+#     	for x in range(0,len(names)):
+#     		rankings.append([str(names[x].getText()),int(x+1)])
+#     	column_headers = ['PLAYER','RANK']
+#     	field = pd.DataFrame(rankings,columns=column_headers)
+#     	field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
+#     	field = field.sort_values('RANK',ascending=True)
+#     	field.to_sql('golfers',db,if_exists = 'replace')
 
     	cur = db.execute('select PLAYER from golfers')
     	df_top20 = pd.DataFrame(cur.fetchall(),columns=['name'])
