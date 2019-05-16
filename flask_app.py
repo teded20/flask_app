@@ -200,6 +200,12 @@ def index():
             df_entries['score6'] = df_entries.golfer6c.map(my_dict)
             df_entries = df_entries[['name','golfer1','score1','golfer2','score2','golfer3','score3','golfer4','score4','golfer5','score5','golfer6','score6','birdies']]
             df_entries['raw_total']= int()
+            df_entries['score1']= int()
+            df_entries['score2']= int()
+            df_entries['score3']= int()
+            df_entries['score4']= int()
+            df_entries['score5']= int()
+            df_entries['score6']= int()
             for x in range(0,len(df_entries)):
             	scores = []
             	scores.extend((df_entries['score1'][x],df_entries['score2'][x],df_entries['score3'][x],df_entries['score4'][x],df_entries['score5'][x],df_entries['score6'][x]))
@@ -236,7 +242,7 @@ def index():
         return render_template('show_entries.html', entries=entries)
     except Exception as e:
         msg = Message("Hello",sender="from@example.com",recipients=["tsedwards17@gmail.com"])
-        mail.send(msg)
+        #mail.send(msg)
         return render_template('404.html')
 
 @app.route('/login', methods=['GET', 'POST'])
