@@ -9,7 +9,7 @@ from flask_mail import Mail, Message
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
 
-golive = datetime(2019,5,16,5,0)
+golive = datetime(2019,7,18,5,0)
 
 app = Flask(__name__)
 mail = Mail(app)
@@ -102,7 +102,7 @@ def index():
             delt = nowtime - lasttime
 
             if delt > timedelta(0,10):
-                url = "http://www.espn.com/golf/leaderboard/_/tournamentId/401056552"
+                url = "https://www.espn.com/golf/leaderboard/_/tournamentId/401056547"
                 page = requests.get(url)
                 soup = BeautifulSoup(page.content,'html.parser')
                 rows = soup.find_all('tr')
@@ -136,12 +136,14 @@ def index():
                         leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
                 #leaderboard.append([len(pos)+1,'Louis Oosthuizen','CUT','WD'])
                 for x in range(0,len(leaderboard)):
-                    if leaderboard[x][1]=='Alexander Noren':
-                        leaderboard[x][1] = 'Alex Noren'
-                    if leaderboard[x][1]=='Rafael Cabrera Bello':
-                        leaderboard[x][1] = 'Rafa Cabrera Bello'
-                    if leaderboard[x][1]=='Alvaro Ortiz (a)':
-                        leaderboard[x][1] = 'Alvaro Ortiz Becerra'
+                    # if leaderboard[x][1]=='Alexander Noren':
+                    #     leaderboard[x][1] = 'Alex Noren'
+                    # if leaderboard[x][1]=='Rafael Cabrera Bello':
+                    #     leaderboard[x][1] = 'Rafa Cabrera Bello'
+                    # if leaderboard[x][1]=='Alvaro Ortiz (a)':
+                    #     leaderboard[x][1] = 'Alvaro Ortiz Becerra'
+                    if leaderboard[x][2]=='-' and len(leaderboard[x][2])==1:
+                        leaderboard[x][2] = '0'
                 #    if leaderboard[x][1]=='Haotong Li':
                 #        leaderboard[x][0]=len(pos)
                 #        leaderboard[x][2]='CUT'
@@ -149,13 +151,13 @@ def index():
                 df=pd.DataFrame(leaderboard,columns = column_headers)
                 df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
                 df['POS'] = df['POS'].str.replace('T','')
-                df['PLAYER'] = df['PLAYER'].str.replace(' (a)','')
+                df['PLAYER'] = df['PLAYER'].str.replace(r" \(.*\)","")
                 df['PLAYER'] = df['PLAYER'].str.replace('-','')
                 df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
                 df['TO_PAR']=df['TO_PAR'].str.replace('WD','0')
 
                 # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-                if datetime.now() > datetime(2019,4,12,5,0):
+                if datetime.now() > datetime(2019,6,14,5,0):
                     #df_cut = df.sort_values('POS',ascending=False)
                     not_cut = df[df.POS != '-']
                     # df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
@@ -200,12 +202,12 @@ def index():
             df_entries['score6'] = df_entries.golfer6c.map(my_dict)
             df_entries = df_entries[['name','golfer1','score1','golfer2','score2','golfer3','score3','golfer4','score4','golfer5','score5','golfer6','score6','birdies']]
             df_entries['raw_total']= int()
-            df_entries['score1']= int()
-            df_entries['score2']= int()
-            df_entries['score3']= int()
-            df_entries['score4']= int()
-            df_entries['score5']= int()
-            df_entries['score6']= int()
+            # df_entries['score1']= int()
+            # df_entries['score2']= int()
+            # df_entries['score3']= int()
+            # df_entries['score4']= int()
+            # df_entries['score5']= int()
+            # df_entries['score6']= int()
             for x in range(0,len(df_entries)):
             	scores = []
             	scores.extend((df_entries['score1'][x],df_entries['score2'][x],df_entries['score3'][x],df_entries['score4'][x],df_entries['score5'][x],df_entries['score6'][x]))
@@ -292,7 +294,9 @@ def add_entry():
     if datetime.today() < golive:
     	db = get_db()
 
-    	# top20url = 'http://www.owgr.com/en/Events/EventResult.aspx?eventid=7417'
+
+        #this changed for the PGA Championship, need to update with not using the OWGR event and just using espn + the OWGR ranking site
+#       top20url = 'http://www.owgr.com/ranking'
 #     	top20page = requests.get(top20url)
 #     	top20soup = BeautifulSoup(top20page.content,'html.parser')
 #     	names = top20soup.findAll('td',{'class':'name'})
