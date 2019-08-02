@@ -149,6 +149,23 @@ def index():
                 #        leaderboard[x][2]='CUT'
                 #        leaderboard[x][3]='WD'
                 df=pd.DataFrame(leaderboard,columns = column_headers)
+
+
+                df_e = pd.read_sql_query('select * from inputs',db)
+                total = len(df_e)
+                df_e = df_e[['golfer1','golfer2','golfer3','golfer4','golfer5','golfer6']]
+                df5 = df_e
+                df2 = pd.concat([df5.golfer1, df5.golfer2,df5.golfer3,df5.golfer4,df5.golfer5,df5.golfer6], ignore_index=True)
+                df3 = pd.DataFrame(df2,columns=['golfers'])
+                df4 = df3['golfers'].value_counts()/total*100
+                owners = dict(df4)
+                df['OWNED']=0
+                df['OWNED'] = df.PLAYER.map(owners)
+                df.OWNED = df.OWNED.round(0)
+                df.OWNED=df.OWNED.fillna(0)
+                df['OWNED']=df.OWNED.astype(int).astype(str)+'%'
+
+
                 df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
                 df['POS'] = df['POS'].str.replace('T','')
                 df['PLAYER'] = df['PLAYER'].str.replace(r" \(.*\)","")
@@ -365,7 +382,7 @@ def add_entry():
 def scoreboard():
 	db = get_db()
 	cur = db.execute('select * from raw_scores')
-	scores = [dict(pos=row[1],player=row[2],to_par=row[3],thru=row[4]) for row in cur.fetchall()]
+	scores = [dict(pos=row[1],player=row[2],to_par=row[3],thru=row[4],owned=row[5]) for row in cur.fetchall()]
 	return render_template('scoreboard.html',scores=scores)
 
 @app.route('/rules', methods=['GET'])

@@ -12,6 +12,7 @@
                   <th>Player</th>
                   <th>To Par</th>
                   <th>Thru</th>
+                  <th>Owned By</th>
                   </tr>
                   </thead>
                   {% for score in scores %}
@@ -20,6 +21,7 @@
                     <td class='r0 text-center' font-weight: bold> {{ score.player }}</td>
                     <td class='r1 text-center'> {{ score.to_par }}</td>
                     <td class='r2 text-center'> {{ score.thru }} </td>
+                    <td class='r2 text-center'> {{ score.owned }} </td>
                   </tr>
                 {% endfor %}
             </table>
