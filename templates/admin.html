@@ -4,6 +4,11 @@
     {% for message in get_flashed_messages() %}
     <div class='flash text-center'>{{ message }}</div>
     {% endfor %}
+    <h2 class = 'text-center'>ESPN Tournament ID:</h2>
+    <form action="{{ url_for('admin') }}" method=post class="form-group text-center">
+        <dd class = 'form-group'><input type=text name='tid'>
+        <input type="submit" value='Submit'>
+    </form>
     <h2 class = 'text-center'>Unpaid Entries:</h2>
   <div align = 'center'>
   <form action="{{ url_for('admin') }}" method=post>

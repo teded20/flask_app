@@ -8,8 +8,7 @@ from datetime import datetime,timedelta
 from flask_mail import Mail, Message
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
-
-golive = datetime(2019,7,18,5,0)
+golive = datetime(2020,3,2,5,0)
 
 app = Flask(__name__)
 mail = Mail(app)
@@ -22,25 +21,6 @@ app.config.update(dict(
     USERNAME='admin',
     PASSWORD='default'
 ))
-
-# SQLALCHEMY_DATABASE_URI = "mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}".format(
-#     username="tsedwards17",
-#     password="comments",
-#     hostname="tsedwards17.mysql.pythonanywhere-services.com",
-#     databasename="tsedwards17$comments",
-# )
-# app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
-# app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
-# app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# db = SQLAlchemy(app)
-
-# class Comment(db.Model):
-
-#     __tablename__ = "comments"
-
-#     id = db.Column(db.Integer, primary_key=True)
-#     content = db.Column(db.String(4096))
 
 
 def connect_db():
@@ -75,22 +55,18 @@ def close_db(error):
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
-# @app.errorhandler(404)
-# def page_not_found(e):
-#     msg = Message("Hello",sender="from@example.com",recipients=["tsedwards17@gmail.com"])
-#     mail.send(msg)
-#     return render_template("404.html")
-
 
 @app.route('/',methods=["GET", "POST"])
 def index():
 
     # db = get_db()
+    # db = sql.connect('flask_app.db')
     # db.execute('delete from inputs') # for when starting new tournament
     # db.execute('delete from golfers')
     # db.execute('delete from leaderboard')
     # db.execute('delete from raw_scores')
     # db.commit()
+    # db.close()
 
     try:
         if datetime.now() > golive:
@@ -102,7 +78,8 @@ def index():
             delt = nowtime - lasttime
 
             if delt > timedelta(0,10):
-                url = "https://www.espn.com/golf/leaderboard/_/tournamentId/401056547"
+                tid = db.execute('select tournamentid from tournament').fetchone()[0]
+                url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
                 page = requests.get(url)
                 soup = BeautifulSoup(page.content,'html.parser')
                 rows = soup.find_all('tr')
@@ -174,7 +151,7 @@ def index():
                 df['TO_PAR']=df['TO_PAR'].str.replace('WD','0')
 
                 # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-                if datetime.now() > datetime(2019,6,14,5,0):
+                if datetime.now() > (golive+timedelta(days=2)):
                     #df_cut = df.sort_values('POS',ascending=False)
                     not_cut = df[df.POS != '-']
                     # df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
@@ -280,14 +257,20 @@ def login():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
+	print("Hi")
 	db = get_db()
 	df_entries = pd.read_sql_query("select name from inputs where paid = 'N'",db)
 	if df_entries.empty:
 		flash('There are no unpaid entries.')
 	unpaid = df_entries['name'].values.tolist()
 	if request.method == 'POST':
+		tid = request.form.get('tid')
 		paid = request.form.getlist('paid')
 		db = get_db()
+		if request.form.get('tid') != '':
+		    print(request.form.get('tid'))
+		    db.execute("update tournament set tournamentid = ?",[request.form.get('tid')])
+		    db.commit()
 		for x in paid:
 		    db.execute("update inputs set paid = 'Y' where name = ?",(x,))
 		    db.commit()
@@ -310,22 +293,68 @@ def admin():
 def add_entry():
     if datetime.today() < golive:
     	db = get_db()
-
-
-        #this changed for the PGA Championship, need to update with not using the OWGR event and just using espn + the OWGR ranking site
-#       top20url = 'http://www.owgr.com/ranking'
-#     	top20page = requests.get(top20url)
-#     	top20soup = BeautifulSoup(top20page.content,'html.parser')
-#     	names = top20soup.findAll('td',{'class':'name'})
-#     	rankings = []
-#     	for x in range(0,len(names)):
-#     		rankings.append([str(names[x].getText()),int(x+1)])
-#     	column_headers = ['PLAYER','RANK']
-#     	field = pd.DataFrame(rankings,columns=column_headers)
-#     	field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
-#     	field = field.sort_values('RANK',ascending=True)
-#     	field.to_sql('golfers',db,if_exists = 'replace')
-
+    	# tid = db.execute('select tournamentid from tournament').fetchone()[0]
+    	# url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
+    	# page = requests.get(url)
+    	# soup = BeautifulSoup(page.content,'html.parser')
+    	# rows = soup.find_all('tr')
+    	# rows = rows[3:]
+    	# column_headers = ['POS','PLAYER','TO_PAR','THRU']
+    	# cells = rows[10].find_all('td')
+    	# leaderboard = []
+    	# if len(cells[0].get_text()) > 5:
+    	#     for x in range(0,len(rows)):
+    	#         if len(rows[x]) == 1:
+    	#             continue
+    	#         cells = rows[x].find_all('td')
+    	#         leaderboard.append(['-',cells[0].get_text(),'-',cells[1].get_text()])
+    	# elif len(cells[1].get_text()) > 5:
+    	#     for x in range(0,len(rows)):
+    	#         if len(rows[x]) == 1:
+    	#             continue
+    	#         cells = rows[x].find_all('td')
+    	#         leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),cells[4].get_text()])
+    	# elif len(cells[2].get_text()) > 5:
+    	#     for x in range(0,len(rows)):
+    	#         if len(rows[x]) == 1:
+    	#             continue
+    	#         cells = rows[x].find_all('td')
+    	#         leaderboard.append([cells[0].get_text(),cells[2].get_text(),cells[3].get_text(),cells[5].get_text()])
+    	# else:
+    	#     for x in range(0,len(rows)):
+    	#         if len(rows[x]) == 1:
+    	#             continue
+    	#         cells = rows[x].find_all('td')
+    	#         leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
+    	#
+    	# for x in range(0,len(leaderboard)):
+    	#     if leaderboard[x][2]=='-' and len(leaderboard[x][2])==1:
+    	#         leaderboard[x][2] = '0'
+    	# df=pd.DataFrame(leaderboard,columns = column_headers)
+    	#
+    	# top20url = 'http://www.owgr.com/ranking'
+    	# top20page = requests.get(top20url)
+    	# top20soup = BeautifulSoup(top20page.content,'html.parser')
+    	# names = top20soup.findAll('td',{'class':'name'})
+    	# rankings = []
+    	# for x in range(0,len(names)):
+    	#     rankings.append([str(names[x].getText()),int(x+1)])
+    	# column_headers = ['PLAYER','RANK']
+    	# field = pd.DataFrame(rankings,columns=column_headers)
+    	# field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
+    	# field = field.sort_values('RANK',ascending=True)
+    	# field = pd.DataFrame(rankings,columns=column_headers)
+    	# field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
+    	# field = field.sort_values('RANK',ascending=True)
+    	#
+    	# df = df.drop(['POS','THRU','TO_PAR'],1)
+    	# df['RANK']=''
+    	# my_dict = dict(zip(field.PLAYER,field.RANK))
+    	# df['RANK'] = df.PLAYER.map(my_dict)
+    	# df.to_sql('golfers',db,if_exists = 'replace')
+    
+    
+    
     	cur = db.execute('select PLAYER from golfers')
     	df_top20 = pd.DataFrame(cur.fetchall(),columns=['name'])
     	top20 = df_top20['name'].tolist()[:20]
