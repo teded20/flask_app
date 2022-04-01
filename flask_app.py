@@ -5,15 +5,13 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import sqlite3 as sql
 from datetime import datetime,timedelta
-from flask_mail import Mail, Message
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
-golive = datetime(2020,3,2,5,0)
+golive = datetime(2022,4,2,5,0)
 
 app = Flask(__name__)
-mail = Mail(app)
 
-# app.config["DEBUG"] = True
+app.config["DEBUG"] = True
 
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'flask_app.db'),
@@ -68,192 +66,198 @@ def index():
     # db.commit()
     # db.close()
 
-    try:
-        if datetime.now() > golive:
-            db = get_db()
 
-            lasttime = db.execute('select * from datetime').fetchone()[0]
-            lasttime = datetime.strptime(lasttime,'%Y-%m-%d %H:%M:%S.%f')
-            nowtime = datetime.today()
-            delt = nowtime - lasttime
+    if datetime.now() > golive:
+        db = get_db()
 
-            if delt > timedelta(0,10):
-                tid = db.execute('select tournamentid from tournament').fetchone()[0]
-                url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
-                page = requests.get(url)
-                soup = BeautifulSoup(page.content,'html.parser')
-                rows = soup.find_all('tr')
-                rows = rows[3:]
-                column_headers = ['POS','PLAYER','TO_PAR','THRU']
-                cells = rows[10].find_all('td')
-                leaderboard = []
-                if len(cells[0].get_text()) > 5:
-                    for x in range(0,len(rows)):
-                        if len(rows[x]) == 1:
-                            continue
-                        cells = rows[x].find_all('td')
-                        leaderboard.append(['-',cells[0].get_text(),'-',cells[1].get_text()])
-                elif len(cells[1].get_text()) > 5:
-                    for x in range(0,len(rows)):
-                        if len(rows[x]) == 1:
-                            continue
-                        cells = rows[x].find_all('td')
-                        leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),cells[4].get_text()])
-                elif len(cells[2].get_text()) > 5:
-                    for x in range(0,len(rows)):
-                        if len(rows[x]) == 1:
-                            continue
-                        cells = rows[x].find_all('td')
-                        leaderboard.append([cells[0].get_text(),cells[2].get_text(),cells[3].get_text(),cells[5].get_text()])
-                else:
-                    for x in range(0,len(rows)):
-                        if len(rows[x]) == 1:
-                            continue
-                        cells = rows[x].find_all('td')
-                        leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
-                #leaderboard.append([len(pos)+1,'Louis Oosthuizen','CUT','WD'])
-                for x in range(0,len(leaderboard)):
-                    # if leaderboard[x][1]=='Alexander Noren':
-                    #     leaderboard[x][1] = 'Alex Noren'
-                    # if leaderboard[x][1]=='Rafael Cabrera Bello':
-                    #     leaderboard[x][1] = 'Rafa Cabrera Bello'
-                    # if leaderboard[x][1]=='Alvaro Ortiz (a)':
-                    #     leaderboard[x][1] = 'Alvaro Ortiz Becerra'
-                    if leaderboard[x][2]=='-' and len(leaderboard[x][2])==1:
-                        leaderboard[x][2] = '0'
-                #    if leaderboard[x][1]=='Haotong Li':
-                #        leaderboard[x][0]=len(pos)
-                #        leaderboard[x][2]='CUT'
-                #        leaderboard[x][3]='WD'
-                df=pd.DataFrame(leaderboard,columns = column_headers)
+        lasttime = db.execute('select * from datetime').fetchone()[0]
+        lasttime = datetime.strptime(lasttime,'%Y-%m-%d %H:%M:%S.%f')
+        nowtime = datetime.today()
+        delt = nowtime - lasttime
 
-
-                df_e = pd.read_sql_query('select * from inputs',db)
-                total = len(df_e)
-                df_e = df_e[['golfer1','golfer2','golfer3','golfer4','golfer5','golfer6']]
-                df5 = df_e
-                df2 = pd.concat([df5.golfer1, df5.golfer2,df5.golfer3,df5.golfer4,df5.golfer5,df5.golfer6], ignore_index=True)
-                df3 = pd.DataFrame(df2,columns=['golfers'])
-                df4 = df3['golfers'].value_counts()/total*100
-                owners = dict(df4)
-                df['OWNED']=0
-                df['OWNED'] = df.PLAYER.map(owners)
-                df.OWNED = df.OWNED.round(0)
-                df.OWNED=df.OWNED.fillna(0)
-                df['OWNED']=df.OWNED.astype(int).astype(str)+'%'
+        if delt > timedelta(0,10):
+            tid = db.execute('select tournamentid from tournament').fetchone()[0]
+            url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
+            page = requests.get(url)
+            soup = BeautifulSoup(page.content,'html.parser')
+            rows = soup.find_all('tr')
+            rows = rows[1:]
+            column_headers = ['POS','PLAYER','TO_PAR','THRU']
+            cells = rows[10].find_all('td')
+            leaderboard = []
+            if len(cells[0].get_text()) > 5:
+                for x in range(0,len(rows)):
+                    if len(rows[x]) == 1:
+                        continue
+                    cells = rows[x].find_all('td')
+                    leaderboard.append(['-',cells[0].get_text(),'-',cells[1].get_text()])
+            elif len(cells[1].get_text()) > 5:#SUNDAY AFTER COMPLETION
+                for x in range(0,len(rows)):
+                    if len(rows[x]) == 1:
+                        continue
+                    cells = rows[x].find_all('td')
+                    leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),cells[4].get_text()])
+            elif len(cells[2].get_text()) > 5:#SUNDAY
+                for x in range(0,len(rows)):
+                    if len(rows[x]) == 1:
+                        continue
+                    cells = rows[x].find_all('td')
+                    leaderboard.append([cells[0].get_text(),cells[2].get_text(),cells[3].get_text(),cells[5].get_text()])
+            else: # THURSADAY AT LEAST
+                for x in range(0,len(rows)):
+                    if len(rows[x]) == 1:
+                        continue
+                    cells = rows[x].find_all('td')
+                    leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
+            #leaderboard.append(['-','Francesco Molinari','CUT','WD'])
+            for x in range(0,len(leaderboard)):
+                if leaderboard[x][2]=='-' and len(leaderboard[x][2])==1:
+                    leaderboard[x][2] = '0'
+                #if leaderboard[x][1]=='Matt Fitzpatrick':
+                #     leaderboard[x][1] = 'Matthew Fitzpatrick'
+                if leaderboard[x][1]=='Rafael Cabrera Bello':
+                     leaderboard[x][1] = 'Rafa Cabrera Bello'
+                if leaderboard[x][1]=='Tyler Strafaci (a)':
+                    leaderboard[x][1] = 'Ty Strafaci (a)'
+                # if leaderboard[x][1]=='Sebastian Munoz':
+                #      leaderboard[x][1] = 'Sebastian J Munoz'
+                # if leaderboard[x][1]=='Matthew Wolff':
+                #     #leaderboard[x][0]=len(pos)
+                #     leaderboard[x][2]='CUT'
+                #     leaderboard[x][3]='CUT'
+            df=pd.DataFrame(leaderboard,columns=column_headers)
 
 
-                df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
-                df['POS'] = df['POS'].str.replace('T','')
-                df['PLAYER'] = df['PLAYER'].str.replace(r" \(.*\)","")
-                df['PLAYER'] = df['PLAYER'].str.replace('-','')
-                df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
+            df_e = pd.read_sql_query('select * from inputs',db)
+            total = len(df_e)
+            df_e = df_e[['golfer1','golfer2','golfer3','golfer4','golfer5','golfer6']]
+            df5 = df_e
+            df2 = pd.concat([df5.golfer1, df5.golfer2,df5.golfer3,df5.golfer4,df5.golfer5,df5.golfer6], ignore_index=True)
+            df3 = pd.DataFrame(df2,columns=['golfers'])
+            df4 = df3['golfers'].value_counts()/total*100
+            owners = dict(df4)
+            df['OWNED']=0
+            df['OWNED'] = df.PLAYER.map(owners)
+            df.OWNED = df.OWNED.round(0)
+            df.OWNED=df.OWNED.fillna(0)
+            df['OWNED']=df.OWNED.astype(int).astype(str)+'%'
+
+
+            df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
+            df['POS'] = df['POS'].str.replace('T','')
+            df['PLAYER'] = df['PLAYER'].str.replace(r" \(.*\)","")
+            df['TO_PAR'] = df.apply(lambda x: x['THRU'] if x['THRU']=='WD' else x['TO_PAR'], axis=1)
+            df['PLAYER'] = df['PLAYER'].str.replace('-','')
+            df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
+
+            # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
+            if datetime.now() > (golive+timedelta(days=1)):
+                #df_cut = df.sort_values('POS',ascending=False)
+                not_cut = df[df.POS != '-']
+                # df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
+                cut_score = int(not_cut['TO_PAR'][not_cut.index[-1]])+2
+                df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
+                df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
+                df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
+                df['TO_PAR'] = df['TO_PAR'].replace('DQ',cut_score)
+            else:
                 df['TO_PAR']=df['TO_PAR'].str.replace('WD','0')
+                df['TO_PAR']=df['TO_PAR'].str.replace('DQ','0')
 
-                # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-                if datetime.now() > (golive+timedelta(days=2)):
-                    #df_cut = df.sort_values('POS',ascending=False)
-                    not_cut = df[df.POS != '-']
-                    # df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
-                    cut_score = int(not_cut['TO_PAR'][not_cut.index[-1]])+2
-                    df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
-                    df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
+            #df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
+            df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
+            if df.loc[0,'POS'] != df.loc[1,'POS']:
+                df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
+            df = df.drop(['POS','THRU'],1)
+            df.to_sql('scores',db,if_exists ='replace')
+            db.execute('update datetime set last_run = ?',(datetime.today(),))
 
-                #df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
-                df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
-                if df.loc[0,'POS'] != df.loc[1,'POS']:
-                    df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
-                df = df.drop(['POS','THRU'],1)
-                df.to_sql('scores',db,if_exists ='replace')
-                db.execute('update datetime set last_run = ?',(datetime.today(),))
+        df_scores = pd.read_sql_query('select * from scores',db)
+        df_scores['PLAYER'] = df_scores['PLAYER'].str.split('[(]').str[0]
+        df_scores['COMPARE'] = df_scores['PLAYER'].str.lower()
+        df_scores['COMPARE'] = df_scores['COMPARE'].str.replace(' ','')
+        df_scores['TO_PAR'] = df_scores['TO_PAR'].fillna(max(df_scores.TO_PAR))
+        my_dict = dict(zip(df_scores.COMPARE,df_scores.TO_PAR))
+        df_entries = pd.read_sql_query('select * from inputs',db)
 
-            df_scores = pd.read_sql_query('select * from scores',db)
-            df_scores['PLAYER'] = df_scores['PLAYER'].str.split('[(]').str[0]
-            df_scores['COMPARE'] = df_scores['PLAYER'].str.lower()
-            df_scores['COMPARE'] = df_scores['COMPARE'].str.replace(' ','')
-            df_scores['TO_PAR'] = df_scores['TO_PAR'].fillna(max(df_scores.TO_PAR))
-            my_dict = dict(zip(df_scores.COMPARE,df_scores.TO_PAR))
-            df_entries = pd.read_sql_query('select * from inputs',db)
+        df_entries['golfer1c'] = df_entries.golfer1.str.replace(' ','')
+        df_entries['golfer1c'] = df_entries.golfer1c.str.lower()
+        df_entries['golfer2c'] = df_entries.golfer2.str.replace(' ','')
+        df_entries['golfer2c'] = df_entries.golfer2c.str.replace('-','')
+        df_entries['golfer2c'] = df_entries.golfer2c.str.lower()
+        df_entries['golfer3c'] = df_entries.golfer3.str.replace(' ','')
+        df_entries['golfer3c'] = df_entries.golfer3c.str.lower()
+        df_entries['golfer4c'] = df_entries.golfer4.str.replace(' ','')
+        df_entries['golfer4c'] = df_entries.golfer4c.str.lower()
+        df_entries['golfer5c'] = df_entries.golfer5.str.replace(' ','')
+        df_entries['golfer5c'] = df_entries.golfer5c.str.lower()
+        df_entries['golfer6c'] = df_entries.golfer6.str.replace(' ','')
+        df_entries['golfer6c'] = df_entries.golfer6c.str.lower()
 
-            df_entries['golfer1c'] = df_entries.golfer1.str.replace(' ','')
-            df_entries['golfer1c'] = df_entries.golfer1c.str.lower()
-            df_entries['golfer2c'] = df_entries.golfer2.str.replace(' ','')
-            df_entries['golfer2c'] = df_entries.golfer2c.str.lower()
-            df_entries['golfer3c'] = df_entries.golfer3.str.replace(' ','')
-            df_entries['golfer3c'] = df_entries.golfer3c.str.lower()
-            df_entries['golfer4c'] = df_entries.golfer4.str.replace(' ','')
-            df_entries['golfer4c'] = df_entries.golfer4c.str.lower()
-            df_entries['golfer5c'] = df_entries.golfer5.str.replace(' ','')
-            df_entries['golfer5c'] = df_entries.golfer5c.str.lower()
-            df_entries['golfer6c'] = df_entries.golfer6.str.replace(' ','')
-            df_entries['golfer6c'] = df_entries.golfer6c.str.lower()
+        df_entries['score1'] = df_entries.golfer1c.map(my_dict)
+        df_entries['score2'] = df_entries.golfer2c.map(my_dict)
+        df_entries['score3'] = df_entries.golfer3c.map(my_dict)
+        df_entries['score4'] = df_entries.golfer4c.map(my_dict)
+        df_entries['score5'] = df_entries.golfer5c.map(my_dict)
+        df_entries['score6'] = df_entries.golfer6c.map(my_dict)
+        df_entries = df_entries[['name','golfer1','score1','golfer2','score2','golfer3','score3','golfer4','score4','golfer5','score5','golfer6','score6','birdies']]
+        df_entries['raw_total']= int()
+        # df_entries['score1']= int()
+        # df_entries['score2']= int()
+        # df_entries['score3']= int()
+        # df_entries['score4']= int()
+        # df_entries['score5']= int()
+        # df_entries['score6']= int()
+        for x in range(0,len(df_entries)):
+        	scores = []
+        	scores.extend((df_entries['score1'][x],df_entries['score2'][x],df_entries['score3'][x],df_entries['score4'][x],df_entries['score5'][x],df_entries['score6'][x]))
+        	scores.sort()
+        	total = sum(scores[:5])
+        	df_entries['raw_total'][x]=int(total)
+        print(df_entries)
+        df_entries['pos']=df_entries['raw_total'].rank(ascending=1,method='min')
+        df_entries.to_sql('leaderboard',db,if_exists='replace')
+        cur = db.execute('select * from leaderboard order by raw_total asc')
+        entries = [dict(Name=row[1],
+        				Golfer1=row[2],
+        				Score1=int(row[3]),
+        				Golfer2=row[4],
+        				Score2=int(row[5]),
+        				Golfer3=row[6],
+        				Score3=int(row[7]),
+        				Golfer4=row[8],
+        				Score4=int(row[9]),
+        				Golfer5=row[10],
+        				Score5=int(row[11]),
+        				Golfer6=row[12],
+        				Score6=int(row[13]),
+        				Birdies=int(row[14]),
+        				raw_total=row[15],
+        				position=int(row[16])) for row in cur.fetchall()]
 
-            df_entries['score1'] = df_entries.golfer1c.map(my_dict)
-            df_entries['score2'] = df_entries.golfer2c.map(my_dict)
-            df_entries['score3'] = df_entries.golfer3c.map(my_dict)
-            df_entries['score4'] = df_entries.golfer4c.map(my_dict)
-            df_entries['score5'] = df_entries.golfer5c.map(my_dict)
-            df_entries['score6'] = df_entries.golfer6c.map(my_dict)
-            df_entries = df_entries[['name','golfer1','score1','golfer2','score2','golfer3','score3','golfer4','score4','golfer5','score5','golfer6','score6','birdies']]
-            df_entries['raw_total']= int()
-            # df_entries['score1']= int()
-            # df_entries['score2']= int()
-            # df_entries['score3']= int()
-            # df_entries['score4']= int()
-            # df_entries['score5']= int()
-            # df_entries['score6']= int()
-            for x in range(0,len(df_entries)):
-            	scores = []
-            	scores.extend((df_entries['score1'][x],df_entries['score2'][x],df_entries['score3'][x],df_entries['score4'][x],df_entries['score5'][x],df_entries['score6'][x]))
-            	scores.sort()
-            	total = sum(scores[:5])
-            	df_entries['raw_total'][x]=int(total)
-            df_entries['pos']=df_entries['raw_total'].rank(ascending=1,method='min')
-            df_entries.to_sql('leaderboard',db,if_exists='replace')
-            cur = db.execute('select * from leaderboard order by raw_total asc')
-            entries = [dict(Name=row[1],
-            				Golfer1=row[2],
-            				Score1=int(row[3]),
-            				Golfer2=row[4],
-            				Score2=int(row[5]),
-            				Golfer3=row[6],
-            				Score3=int(row[7]),
-            				Golfer4=row[8],
-            				Score4=int(row[9]),
-            				Golfer5=row[10],
-            				Score5=int(row[11]),
-            				Golfer6=row[12],
-            				Score6=int(row[13]),
-            				Birdies=int(row[14]),
-            				raw_total=row[15],
-            				position=int(row[16])) for row in cur.fetchall()]
+        db.commit()
 
-            db.commit()
+    else:
+        db = get_db()
+        entries = db.execute('select name from inputs')
+        flash('Full picks will be displayed once tournament begins.')
 
-        else:
-            db = get_db()
-            entries = db.execute('select name from inputs')
-            flash('Full picks will be displayed once tournament begins.')
+    return render_template('show_entries.html', entries=entries)
 
-        return render_template('show_entries.html', entries=entries)
-    except Exception as e:
-        msg = Message("Hello",sender="from@example.com",recipients=["tsedwards17@gmail.com"])
-        #mail.send(msg)
-        return render_template('404.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
-            error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid password'
-        else:
-            session['logged_in'] = True
-            # flash('You were logged in')
-            return redirect(url_for('admin'))
-    return render_template('login.html', error=error)
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     error = None
+#     if request.method == 'POST':
+#         if request.form['username'] != app.config['USERNAME']:
+#             error = 'Invalid username'
+#         elif request.form['password'] != app.config['PASSWORD']:
+#             error = 'Invalid password'
+#         else:
+#             session['logged_in'] = True
+#             # flash('You were logged in')
+#             return redirect(url_for('admin'))
+#     return render_template('login.html', error=error)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -267,10 +271,10 @@ def admin():
 		tid = request.form.get('tid')
 		paid = request.form.getlist('paid')
 		db = get_db()
-		if request.form.get('tid') != '':
-		    print(request.form.get('tid'))
-		    db.execute("update tournament set tournamentid = ?",[request.form.get('tid')])
-		    db.commit()
+# 		if request.form.get('tid') != '':
+# 		    print(request.form.get('tid'))
+# 		    db.execute("update tournament set tournamentid = ?",[request.form.get('tid')])
+# 		    db.commit()
 		for x in paid:
 		    db.execute("update inputs set paid = 'Y' where name = ?",(x,))
 		    db.commit()
@@ -292,69 +296,76 @@ def admin():
 @app.route('/add', methods=['GET', 'POST'])
 def add_entry():
     if datetime.today() < golive:
+
     	db = get_db()
-    	# tid = db.execute('select tournamentid from tournament').fetchone()[0]
-    	# url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
-    	# page = requests.get(url)
-    	# soup = BeautifulSoup(page.content,'html.parser')
-    	# rows = soup.find_all('tr')
-    	# rows = rows[3:]
-    	# column_headers = ['POS','PLAYER','TO_PAR','THRU']
-    	# cells = rows[10].find_all('td')
-    	# leaderboard = []
-    	# if len(cells[0].get_text()) > 5:
-    	#     for x in range(0,len(rows)):
-    	#         if len(rows[x]) == 1:
-    	#             continue
-    	#         cells = rows[x].find_all('td')
-    	#         leaderboard.append(['-',cells[0].get_text(),'-',cells[1].get_text()])
-    	# elif len(cells[1].get_text()) > 5:
-    	#     for x in range(0,len(rows)):
-    	#         if len(rows[x]) == 1:
-    	#             continue
-    	#         cells = rows[x].find_all('td')
-    	#         leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),cells[4].get_text()])
-    	# elif len(cells[2].get_text()) > 5:
-    	#     for x in range(0,len(rows)):
-    	#         if len(rows[x]) == 1:
-    	#             continue
-    	#         cells = rows[x].find_all('td')
-    	#         leaderboard.append([cells[0].get_text(),cells[2].get_text(),cells[3].get_text(),cells[5].get_text()])
-    	# else:
-    	#     for x in range(0,len(rows)):
-    	#         if len(rows[x]) == 1:
-    	#             continue
-    	#         cells = rows[x].find_all('td')
-    	#         leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
-    	#
-    	# for x in range(0,len(leaderboard)):
-    	#     if leaderboard[x][2]=='-' and len(leaderboard[x][2])==1:
-    	#         leaderboard[x][2] = '0'
-    	# df=pd.DataFrame(leaderboard,columns = column_headers)
-    	#
-    	# top20url = 'http://www.owgr.com/ranking'
-    	# top20page = requests.get(top20url)
-    	# top20soup = BeautifulSoup(top20page.content,'html.parser')
-    	# names = top20soup.findAll('td',{'class':'name'})
-    	# rankings = []
-    	# for x in range(0,len(names)):
-    	#     rankings.append([str(names[x].getText()),int(x+1)])
-    	# column_headers = ['PLAYER','RANK']
-    	# field = pd.DataFrame(rankings,columns=column_headers)
-    	# field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
-    	# field = field.sort_values('RANK',ascending=True)
-    	# field = pd.DataFrame(rankings,columns=column_headers)
-    	# field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
-    	# field = field.sort_values('RANK',ascending=True)
-    	#
-    	# df = df.drop(['POS','THRU','TO_PAR'],1)
-    	# df['RANK']=''
-    	# my_dict = dict(zip(field.PLAYER,field.RANK))
-    	# df['RANK'] = df.PLAYER.map(my_dict)
-    	# df.to_sql('golfers',db,if_exists = 'replace')
-    
-    
-    
+
+#start here
+    # 	tid = db.execute('select tournamentid from tournament').fetchone()[0]
+    # 	url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
+    # 	page = requests.get(url)
+    # 	soup = BeautifulSoup(page.content,'html.parser')
+    # 	rows = soup.find_all('tr')
+    # 	rows = rows[1:]
+    # 	column_headers = ['POS','PLAYER','TO_PAR','THRU']
+    # 	cells = rows[10].find_all('td')
+    # 	leaderboard = []
+    # 	if len(cells[0].get_text()) > 5:
+    # 	    for x in range(0,len(rows)):
+    # 	        if len(rows[x]) == 1:
+    # 	            continue
+    # 	        cells = rows[x].find_all('td')
+    # 	        leaderboard.append(['-',cells[0].get_text(),'-',cells[1].get_text()])
+    # 	elif len(cells[1].get_text()) > 5:
+    # 	    for x in range(0,len(rows)):
+    # 	        if len(rows[x]) == 1:
+    # 	            continue
+    # 	        cells = rows[x].find_all('td')
+    # 	        leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),cells[4].get_text()])
+    # 	elif len(cells[2].get_text()) > 5:
+    # 	    for x in range(0,len(rows)):
+    # 	        if len(rows[x]) == 1:
+    # 	            continue
+    # 	        cells = rows[x].find_all('td')
+    # 	        leaderboard.append([cells[0].get_text(),cells[2].get_text(),cells[3].get_text(),cells[5].get_text()])
+    # 	else:
+    # 	    for x in range(0,len(rows)):
+    # 	        if len(rows[x]) == 1:
+    # 	            continue
+    # 	        cells = rows[x].find_all('td')
+    # 	        leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
+
+    # 	for x in range(0,len(leaderboard)):
+    # 	    if leaderboard[x][2]=='-' and len(leaderboard[x][2])==1:
+    # 	        leaderboard[x][2] = '0'
+    # 	df=pd.DataFrame(leaderboard,columns = column_headers)
+
+    # 	top20url = 'http://www.owgr.com/ranking'
+    # 	top20page = requests.get(top20url)
+    # 	top20soup = BeautifulSoup(top20page.content,'html.parser')
+    # 	names = top20soup.findAll('td',{'class':'name'})
+    # 	rankings = []
+    # 	for x in range(0,len(names)):
+    # 	    rankings.append([str(names[x].getText()),int(x+1)])
+    # 	for x in range(0,len(rankings)):
+    # 	    if rankings[x][0]=='Matthew Fitzpatrick':
+    # 	        rankings[x][0] = 'Matt Fitzpatrick'
+    # 	column_headers = ['PLAYER','RANK']
+    # 	field = pd.DataFrame(rankings,columns=column_headers)
+    # 	field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
+    # 	field = field.sort_values('RANK',ascending=True)
+    # 	field = pd.DataFrame(rankings,columns=column_headers)
+    # 	field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
+    # 	field = field.sort_values('RANK',ascending=True)
+
+    # 	df = df.drop(['POS','THRU','TO_PAR'],1)
+    # 	df['RANK']=''
+    # 	my_dict = dict(zip(field.PLAYER,field.RANK))
+    # 	df['RANK'] = df.PLAYER.map(my_dict)
+    # 	df=df.sort_values(by=["RANK"])
+    # 	df.to_sql('golfers',db,if_exists = 'replace')
+#stop here
+
+
     	cur = db.execute('select PLAYER from golfers')
     	df_top20 = pd.DataFrame(cur.fetchall(),columns=['name'])
     	top20 = df_top20['name'].tolist()[:20]
