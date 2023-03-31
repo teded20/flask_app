@@ -1,4 +1,3 @@
-
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -7,7 +6,7 @@ import sqlite3 as sql
 from datetime import datetime,timedelta
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
-golive = datetime(2022,4,4,5,0)
+golive = datetime(2023,4,5,5,0)
 
 app = Flask(__name__)
 
@@ -53,19 +52,12 @@ def close_db(error):
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
 
 @app.route('/',methods=["GET", "POST"])
 def index():
-
-    # db = get_db()
-    # db = sql.connect('flask_app.db')
-    # db.execute('delete from inputs') # for when starting new tournament
-    # db.execute('delete from golfers')
-    # db.execute('delete from leaderboard')
-    # db.execute('delete from raw_scores')
-    # db.commit()
-    # db.close()
-
 
     if datetime.now() > golive:
         db = get_db()
@@ -75,18 +67,19 @@ def index():
         nowtime = datetime.today()
         delt = nowtime - lasttime
 
-        if delt > timedelta(0,10):
+        if delt > timedelta(0,60):
             tid = db.execute('select tournamentid from tournament').fetchone()[0]
             url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
             page = requests.get(url)
             soup = BeautifulSoup(page.content,'html.parser')
             rows = soup.find_all('tr')
-            #rows = rows[1:]
             headers = []
+
+            #CHANGE THIS BEFORE THE NEXT TOURNMANET TO ROWS[0] THIS WAS CASUE OF THE PLAYOFF HOLE
             test = rows[0].find_all('th')
+
             for x in range(0,len(test)):
                 headers.append(test[x].get_text())
-            #column_headers = ['POS','PLAYER','TO_PAR','THRU']
             rows=rows[1:]
             cells = rows[10].find_all('td')
             leaderboard = []
@@ -96,15 +89,33 @@ def index():
                 for y in range(0,len(cells)):
                     nextrow.append(cells[y].get_text())
                 leaderboard.append(nextrow)
+            #leaderboard.append(['','Bryson DeChambeau','0'])
 
             df=pd.DataFrame(leaderboard,columns=headers)
+
+            #df = df[~df['TOT'].isnull()]
+
             #df=df.drop([0])
             if {'THRU'}.issubset(df.columns):
                 df = df[['POS','PLAYER','SCORE','THRU']]
+            elif {'TEE TIME'}.issubset(df.columns):
+                df=df[['PLAYER',"TEE TIME"]]
+                df = df.rename(columns={"TEE TIME": "THRU"})
+                df['TO_PAR']="E"
+                df['POS']="-"
+                df = df.reindex(columns=['POS','PLAYER','TO_PAR','THRU'])
             else:
                 df = df[['POS','PLAYER','SCORE']]
                 df['THRU']="F"
             df = df.rename(columns={"SCORE": "TO_PAR"})
+
+            # #if someone withdraws from the tournament early, comment this in
+            # df_add=df.iloc[[-1]]
+            # df_add['PLAYER'] = 'Abraham Ancer'
+            # #df_add['TO_PAR'] = 'WD'
+            # #df_add['THRU'] = ''
+            # #df_add['POS'] = ''
+            # df = df.append(df_add)
 
             df_e = pd.read_sql_query('select * from inputs',db)
             total = len(df_e)
@@ -120,22 +131,42 @@ def index():
             df.OWNED=df.OWNED.fillna(0)
             df['OWNED']=df.OWNED.astype(int).astype(str)+'%'
 
+            #COMMENT THIS OUT
+            #df = df[~df['THRU'].isnull()]
+
 
             df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
             df['POS'] = df['POS'].str.replace('T','')
             df['PLAYER'] = df['PLAYER'].str.replace(r" \(.*\)","")
             df['TO_PAR'] = df.apply(lambda x: x['THRU'] if x['THRU']=='WD' else x['TO_PAR'], axis=1)
             df['PLAYER'] = df['PLAYER'].str.replace('-','')
+            df.loc[(df.PLAYER == 'Cam Davis'),'PLAYER']='Cameron Davis'
+            #df.loc[(df.PLAYER == 'Kyoung-Hoon Lee'),'PLAYER']='K.H. Lee'
+            df.loc[(df.PLAYER == 'Sebastián Muñoz'),'PLAYER']='Sebastian Munoz'
+            df.loc[(df.PLAYER == 'Nicolai Højgaard'),'PLAYER']='Nicolai Hojgaard'
+            df.loc[(df.PLAYER == 'Min-gyu Cho'),'PLAYER']='Mingyu Cho'
+            df.loc[(df.PLAYER == 'Pablo Larrazábal'),'PLAYER']='Pablo Larrazabal'
+            df.loc[(df.PLAYER == 'Si Woo Kim'),'PLAYER']='Siwoo Kim'
+            df.loc[(df.PLAYER == 'Mito Pereira'),'PLAYER']='Guillermo Mito Pereira'
+            df.loc[(df.PLAYER == 'Alex Noren'),'PLAYER']='Alexander Noren'
+            df.loc[(df.PLAYER == 'Augusto Núñez'),'PLAYER']='Augusto Nunez'
+            df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
+            df.loc[(df.PLAYER == 'Matti Schmid'),'PLAYER']='Matthias Schmid'
+            df.loc[(df.PLAYER == 'Nico Echavarria'),'PLAYER']='Nicolas Echavarria'
+            df.loc[(df.PLAYER == 'Paul Haley II'),'PLAYER']='Paul Haley'
+            df.loc[(df.PLAYER == 'Roberto Díaz'),'PLAYER']='Roberto Diaz'
+
+
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
 
             # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-            if datetime.now() > (golive+timedelta(days=1)):
+            if datetime.now() > datetime(2022,7,15,5,0):
                 #df_cut = df.sort_values('POS',ascending=False)
-                not_cut = df[df.POS != '-']
+                df = df[~df['PLAYER'].isnull()]
+                not_cut = df[df.POS != '-'] #remove everyone that has a POS as "-" aka those who were cut
                 # df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
                 cut_score = int(not_cut['TO_PAR'][not_cut.index[-1]])+2
                 df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
-                df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
                 df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
                 df['TO_PAR'] = df['TO_PAR'].replace('DQ',cut_score)
             else:
@@ -144,8 +175,15 @@ def index():
 
             #df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
             df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
-            if df.loc[0,'POS'] != df.loc[1,'POS']:
+
+
+            if df.loc[0,'POS'] != df.loc[1,'POS']: #this substracts 3 if the leader is solo in the lead
                 df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
+
+            # if df.loc[4,'POS'] != df.loc[5,'POS']: #this substracts 3 if the leader is solo in the lead
+            #     df.loc[4,'TO_PAR']=df.loc[4,'TO_PAR']-3
+
+
             df = df.drop(['POS','THRU'],1)
             df.to_sql('scores',db,if_exists ='replace')
             db.execute('update datetime set last_run = ?',(datetime.today(),))
@@ -156,6 +194,7 @@ def index():
         df_scores['COMPARE'] = df_scores['COMPARE'].str.replace(' ','')
         df_scores['TO_PAR'] = df_scores['TO_PAR'].fillna(max(df_scores.TO_PAR))
         my_dict = dict(zip(df_scores.COMPARE,df_scores.TO_PAR))
+
         df_entries = pd.read_sql_query('select * from inputs',db)
 
         df_entries['golfer1c'] = df_entries.golfer1.str.replace(' ','')
@@ -275,71 +314,7 @@ def admin():
 def add_entry():
     if datetime.today() < golive:
         db = get_db()
-#start here
-        tid = db.execute('select tournamentid from tournament').fetchone()[0]
-        url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
-        page = requests.get(url)
-        soup = BeautifulSoup(page.content,'html.parser')
-        rows = soup.find_all('tr')
-        rows = rows[1:]
-        column_headers = ['POS','PLAYER','TO_PAR','THRU']
-        cells = rows[10].find_all('td')
-        leaderboard = []
-        if len(cells[0].get_text()) > 5:
-            for x in range(0,len(rows)):
-                if len(rows[x]) == 1:
-                    continue
-                cells = rows[x].find_all('td')
-                leaderboard.append(['-',cells[0].get_text(),'-',cells[1].get_text()])
-        elif len(cells[1].get_text()) > 5:
-            for x in range(0,len(rows)):
-                if len(rows[x]) == 1:
-                    continue
-                cells = rows[x].find_all('td')
-                leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),cells[4].get_text()])
-        elif len(cells[2].get_text()) > 5:
-            for x in range(0,len(rows)):
-                if len(rows[x]) == 1:
-                    continue
-                cells = rows[x].find_all('td')
-                leaderboard.append([cells[0].get_text(),cells[2].get_text(),cells[3].get_text(),cells[5].get_text()])
-        else:
-            for x in range(0,len(rows)):
-                if len(rows[x]) == 1:
-                    continue
-                cells = rows[x].find_all('td')
-                leaderboard.append([cells[0].get_text(),cells[1].get_text(),cells[2].get_text(),'F'])
 
-        for x in range(0,len(leaderboard)):
-            if leaderboard[x][2]=='-' and len(leaderboard[x][2])==1:
-                leaderboard[x][2] = '0'
-        df=pd.DataFrame(leaderboard,columns = column_headers)
-
-        top20url = 'http://www.owgr.com/ranking'
-        top20page = requests.get(top20url)
-        top20soup = BeautifulSoup(top20page.content,'html.parser')
-        names = top20soup.findAll('td',{'class':'name'})
-        rankings = []
-        for x in range(0,len(names)):
-            rankings.append([str(names[x].getText()),int(x+1)])
-        for x in range(0,len(rankings)):
-            if rankings[x][0]=='Matthew Fitzpatrick':
-                rankings[x][0] = 'Matt Fitzpatrick'
-        column_headers = ['PLAYER','RANK']
-        field = pd.DataFrame(rankings,columns=column_headers)
-        field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
-        field = field.sort_values('RANK',ascending=True)
-        field = pd.DataFrame(rankings,columns=column_headers)
-        field['PLAYER'] = field['PLAYER'].str.split('[(]').str[0]
-        field = field.sort_values('RANK',ascending=True)
-
-        df = df.drop(['POS','THRU','TO_PAR'],1)
-        df['RANK']=''
-        my_dict = dict(zip(field.PLAYER,field.RANK))
-        df['RANK'] = df.PLAYER.map(my_dict)
-        df=df.sort_values(by=["RANK"])
-        df.to_sql('golfers',db,if_exists = 'replace')
-#stop here
 
 
         cur = db.execute('select PLAYER from golfers')
