@@ -141,13 +141,14 @@ def index():
             df['TO_PAR'] = df.apply(lambda x: x['THRU'] if x['THRU']=='WD' else x['TO_PAR'], axis=1)
             df['PLAYER'] = df['PLAYER'].str.replace('-','')
             df.loc[(df.PLAYER == 'Cam Davis'),'PLAYER']='Cameron Davis'
-            #df.loc[(df.PLAYER == 'Kyoung-Hoon Lee'),'PLAYER']='K.H. Lee'
+            df.loc[(df.PLAYER == 'K.H. Lee'),'PLAYER']='Kyoung-Hoon Lee'
             df.loc[(df.PLAYER == 'Sebastián Muñoz'),'PLAYER']='Sebastian Munoz'
             df.loc[(df.PLAYER == 'Nicolai Højgaard'),'PLAYER']='Nicolai Hojgaard'
             df.loc[(df.PLAYER == 'Min-gyu Cho'),'PLAYER']='Mingyu Cho'
             df.loc[(df.PLAYER == 'Pablo Larrazábal'),'PLAYER']='Pablo Larrazabal'
             df.loc[(df.PLAYER == 'Si Woo Kim'),'PLAYER']='Siwoo Kim'
-            df.loc[(df.PLAYER == 'Mito Pereira'),'PLAYER']='Guillermo Mito Pereira'
+            #df.loc[(df.PLAYER == 'Mito Pereira'),'PLAYER']='Guillermo Mito Pereira'
+            df.loc[(df.PLAYER == 'José María Olazábal'),'PLAYER']='Jose Maria Olazabal'
             df.loc[(df.PLAYER == 'Alex Noren'),'PLAYER']='Alexander Noren'
             df.loc[(df.PLAYER == 'Augusto Núñez'),'PLAYER']='Augusto Nunez'
             df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
@@ -160,7 +161,7 @@ def index():
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
 
             # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-            if datetime.now() > datetime(2022,7,15,5,0):
+            if datetime.now() > datetime(2023,4,8,5,0):
                 #df_cut = df.sort_values('POS',ascending=False)
                 df = df[~df['PLAYER'].isnull()]
                 not_cut = df[df.POS != '-'] #remove everyone that has a POS as "-" aka those who were cut
