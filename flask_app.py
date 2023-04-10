@@ -147,7 +147,7 @@ def index():
             df.loc[(df.PLAYER == 'Min-gyu Cho'),'PLAYER']='Mingyu Cho'
             df.loc[(df.PLAYER == 'Pablo Larrazábal'),'PLAYER']='Pablo Larrazabal'
             df.loc[(df.PLAYER == 'Si Woo Kim'),'PLAYER']='Siwoo Kim'
-            #df.loc[(df.PLAYER == 'Mito Pereira'),'PLAYER']='Guillermo Mito Pereira'
+            df.loc[(df.PLAYER == 'Séamus Power'),'PLAYER']='Seamus Power'
             df.loc[(df.PLAYER == 'José María Olazábal'),'PLAYER']='Jose Maria Olazabal'
             df.loc[(df.PLAYER == 'Alex Noren'),'PLAYER']='Alexander Noren'
             df.loc[(df.PLAYER == 'Augusto Núñez'),'PLAYER']='Augusto Nunez'
