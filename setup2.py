@@ -10,7 +10,7 @@ conn = sql.connect('flask_app.db')
 
 cursor = conn.cursor()
 
-field_file = "testfiles/2023mastersfield.csv"
+field_file = "testfiles/2023pgafield.csv"
 
 # for when starting new tournament
 cursor.execute('delete from inputs') 

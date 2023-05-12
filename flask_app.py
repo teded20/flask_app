@@ -6,7 +6,7 @@ import sqlite3 as sql
 from datetime import datetime,timedelta
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
-golive = datetime(2023,4,6,5,0)
+golive = datetime(2023,5,18,5,0)
 
 app = Flask(__name__)
 
@@ -161,7 +161,7 @@ def index():
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
 
             # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-            if datetime.now() > datetime(2023,4,8,5,0):
+            if datetime.now() > datetime(2023,5,20,5,0):
                 #df_cut = df.sort_values('POS',ascending=False)
                 df = df[~df['PLAYER'].isnull()]
                 not_cut = df[df.POS != '-'] #remove everyone that has a POS as "-" aka those who were cut
