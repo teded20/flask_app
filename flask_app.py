@@ -6,11 +6,11 @@ import sqlite3 as sql
 from datetime import datetime,timedelta
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
-golive = datetime(2023,5,18,5,0)
+golive = datetime(2023,5,18,6,0)
 
 app = Flask(__name__)
 
-app.config["DEBUG"] = True
+#app.config["DEBUG"] = True
 
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'flask_app.db'),
