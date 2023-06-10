@@ -156,12 +156,14 @@ def index():
             df.loc[(df.PLAYER == 'Nico Echavarria'),'PLAYER']='Nicolas Echavarria'
             df.loc[(df.PLAYER == 'Paul Haley II'),'PLAYER']='Paul Haley'
             df.loc[(df.PLAYER == 'Roberto Díaz'),'PLAYER']='Roberto Diaz'
+            df.loc[(df.PLAYER == 'Harold Varner III'),'PLAYER']='Harold Varner'
+            df.loc[(df.PLAYER == 'Rasmus Højgaard'),'PLAYER']='Rasmus Hojgaard'
 
 
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
 
             # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-            if datetime.now() > datetime(2023,5,20,5,0):
+            if datetime.now() > datetime(2023,5,19,5,0):
                 #df_cut = df.sort_values('POS',ascending=False)
                 df = df[~df['PLAYER'].isnull()]
                 not_cut = df[df.POS != '-'] #remove everyone that has a POS as "-" aka those who were cut
