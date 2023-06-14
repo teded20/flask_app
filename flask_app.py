@@ -163,7 +163,8 @@ def index():
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
 
             # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-            if datetime.now() > datetime(2023,5,19,5,0):
+            #if datetime.now() > datetime(2023,5,19,5,0):
+            if 'CUT' in df['TO_PAR']:
                 #df_cut = df.sort_values('POS',ascending=False)
                 df = df[~df['PLAYER'].isnull()]
                 not_cut = df[df.POS != '-'] #remove everyone that has a POS as "-" aka those who were cut
