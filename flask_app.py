@@ -6,7 +6,7 @@ import sqlite3 as sql
 from datetime import datetime,timedelta
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
-golive = datetime(2023,6,15,6,0)
+golive = datetime(2023,6,15,5,0)
 
 app = Flask(__name__)
 
