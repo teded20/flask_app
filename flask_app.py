@@ -151,13 +151,17 @@ def index():
             df.loc[(df.PLAYER == 'José María Olazábal'),'PLAYER']='Jose Maria Olazabal'
             df.loc[(df.PLAYER == 'Alex Noren'),'PLAYER']='Alexander Noren'
             df.loc[(df.PLAYER == 'Augusto Núñez'),'PLAYER']='Augusto Nunez'
-            df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
+            #df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
             df.loc[(df.PLAYER == 'Matti Schmid'),'PLAYER']='Matthias Schmid'
             df.loc[(df.PLAYER == 'Nico Echavarria'),'PLAYER']='Nicolas Echavarria'
             df.loc[(df.PLAYER == 'Paul Haley II'),'PLAYER']='Paul Haley'
             df.loc[(df.PLAYER == 'Roberto Díaz'),'PLAYER']='Roberto Diaz'
             df.loc[(df.PLAYER == 'Harold Varner III'),'PLAYER']='Harold Varner'
             df.loc[(df.PLAYER == 'Rasmus Højgaard'),'PLAYER']='Rasmus Hojgaard'
+            df.loc[(df.PLAYER == 'Jordan Smith'),'PLAYER']='Jordan L. Smith'
+            df.loc[(df.PLAYER == 'Brandon Robinson Thompson'),'PLAYER']='Brandon Robinson-Thompson'
+            df.loc[(df.PLAYER == 'Alexander Björk'),'PLAYER']='Alexander Bjork'
+            df.loc[(df.PLAYER == 'Thorbjørn Olesen'),'PLAYER']='Thorbjorn Olesen'
 
 
             df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
