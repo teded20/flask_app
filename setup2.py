@@ -4,13 +4,13 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import sqlite3 as sql
 from datetime import datetime,timedelta
-from flask import Flask, request, session, g, redirect, url_for,render_template, flash
+#from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 
 conn = sql.connect('flask_app.db')
 
 cursor = conn.cursor()
 
-field_file = "testfiles/2023openfield.csv"
+field_file = "testfiles/2024mastersfield.csv"
 
 # for when starting new tournament
 cursor.execute('delete from inputs') 

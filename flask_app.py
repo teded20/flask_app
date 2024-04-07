@@ -5,8 +5,9 @@ import pandas as pd
 import sqlite3 as sql
 from datetime import datetime,timedelta
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
+from apitest import fetch_leaderboard_data, insert_data_into_database, can_call_api, get_last_call_timestamp, update_last_call_timestamp
 
-golive = datetime(2023,7,20,5,0)
+golive = datetime(2024,4,11,5,0)
 
 app = Flask(__name__)
 
@@ -58,143 +59,113 @@ def page_not_found(error):
 
 @app.route('/',methods=["GET", "POST"])
 def index():
-
     if datetime.now() > golive:
+        # Check if API can be called based on last call timestamp
+        last_call_timestamp = get_last_call_timestamp("flask_app.db")
+        if can_call_api(last_call_timestamp):
+            # Fetch data from the API
+            headers = {
+                "X-RapidAPI-Key": "ec34e27eb0mshc4a776c20e717bfp127602jsn97ffbe5d0d3a",
+                "X-RapidAPI-Host": "golf-leaderboard-data.p.rapidapi.com"
+            }
+            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/650", headers)
+            if data:
+                # Insert data into SQLite database
+                insert_data_into_database("flask_app.db", data)
+                # Update last API call timestamp
+                update_last_call_timestamp("flask_app.db", datetime.now())
+                print('Leaderboard updated successfully!')
+            else:
+                print('Failed to update leaderboard.')
+        else:
+            print('API can only be called once every 5 minutes.')
         db = get_db()
+        df=pd.read_sql_query('select * from leaderboard_array',db)
+        df=df[['position','first_name','last_name','status','holes_played','total_to_par']]
+        df.loc[df['status'] == 'cut', 'total_to_par'] = 'CUT'
+        df.loc[df['status'] == 'withdrawn', 'total_to_par'] = 'WD'
+        df['PLAYER'] = df['first_name'].str.cat(df['last_name'], sep=' ')
+        df = df.rename(columns={"position": "POS","total_to_par":"TO_PAR","holes_played":"THRU"})
+        df = df[['POS','PLAYER','TO_PAR','THRU']]
+        df = df.sort_values(by='POS').reset_index(drop=True)
+        
+        df_e = pd.read_sql_query('select * from inputs',db)
+        total = len(df_e)
+        df_e = df_e[['golfer1','golfer2','golfer3','golfer4','golfer5','golfer6']]
+        df5 = df_e
+        df2 = pd.concat([df5.golfer1, df5.golfer2,df5.golfer3,df5.golfer4,df5.golfer5,df5.golfer6], ignore_index=True)
+        df3 = pd.DataFrame(df2,columns=['golfers'])
+        df4 = df3['golfers'].value_counts()/total*100
+        owners = dict(df4)
+        df['OWNED']=0
+        df['OWNED'] = df.PLAYER.map(owners)
+        df.OWNED = df.OWNED.round(0)
+        df.OWNED=df.OWNED.fillna(0)
+        df['OWNED']=df.OWNED.astype(int).astype(str)+'%'
 
-        lasttime = db.execute('select * from datetime').fetchone()[0]
-        lasttime = datetime.strptime(lasttime,'%Y-%m-%d %H:%M:%S.%f')
-        nowtime = datetime.today()
-        delt = nowtime - lasttime
-
-        if delt > timedelta(0,60):
-            tid = db.execute('select tournamentid from tournament').fetchone()[0]
-            url = "https://www.espn.com/golf/leaderboard/_/tournamentId/"+tid
-            page = requests.get(url)
-            soup = BeautifulSoup(page.content,'html.parser')
-            rows = soup.find_all('tr')
-            headers = []
-
-            #CHANGE THIS BEFORE THE NEXT TOURNMANET TO ROWS[0] THIS WAS CASUE OF THE PLAYOFF HOLE
-            test = rows[0].find_all('th')
-
-            for x in range(0,len(test)):
-                headers.append(test[x].get_text())
-            rows=rows[1:]
-            cells = rows[10].find_all('td')
-            leaderboard = []
-            for x in range(0,len(rows)):
-                cells=rows[x].find_all('td')
-                nextrow=[]
-                for y in range(0,len(cells)):
-                    nextrow.append(cells[y].get_text())
-                leaderboard.append(nextrow)
-            #leaderboard.append(['','Bryson DeChambeau','0'])
-
-            df=pd.DataFrame(leaderboard,columns=headers)
-
-            #df = df[~df['TOT'].isnull()]
-
-            #df=df.drop([0])
-            if {'THRU'}.issubset(df.columns):
-                df = df[['POS','PLAYER','SCORE','THRU']]
-            elif {'TEE TIME'}.issubset(df.columns):
-                df=df[['PLAYER',"TEE TIME"]]
-                df = df.rename(columns={"TEE TIME": "THRU"})
-                df['TO_PAR']="E"
-                df['POS']="-"
-                df = df.reindex(columns=['POS','PLAYER','TO_PAR','THRU'])
-            else:
-                df = df[['POS','PLAYER','SCORE']]
-                df['THRU']="F"
-            df = df.rename(columns={"SCORE": "TO_PAR"})
-
-            # #if someone withdraws from the tournament early, comment this in
-            # df_add=df.iloc[[-1]]
-            # df_add['PLAYER'] = 'Abraham Ancer'
-            # #df_add['TO_PAR'] = 'WD'
-            # #df_add['THRU'] = ''
-            # #df_add['POS'] = ''
-            # df = df.append(df_add)
-
-            df_e = pd.read_sql_query('select * from inputs',db)
-            total = len(df_e)
-            df_e = df_e[['golfer1','golfer2','golfer3','golfer4','golfer5','golfer6']]
-            df5 = df_e
-            df2 = pd.concat([df5.golfer1, df5.golfer2,df5.golfer3,df5.golfer4,df5.golfer5,df5.golfer6], ignore_index=True)
-            df3 = pd.DataFrame(df2,columns=['golfers'])
-            df4 = df3['golfers'].value_counts()/total*100
-            owners = dict(df4)
-            df['OWNED']=0
-            df['OWNED'] = df.PLAYER.map(owners)
-            df.OWNED = df.OWNED.round(0)
-            df.OWNED=df.OWNED.fillna(0)
-            df['OWNED']=df.OWNED.astype(int).astype(str)+'%'
-
-            #COMMENT THIS OUT
-            #df = df[~df['THRU'].isnull()]
+        #COMMENT THIS OUT
+        #df = df[~df['THRU'].isnull()]
 
 
-            df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
-            df['POS'] = df['POS'].str.replace('T','')
-            df['PLAYER'] = df['PLAYER'].str.replace(r" \(.*\)","")
-            df['TO_PAR'] = df.apply(lambda x: x['THRU'] if x['THRU']=='WD' else x['TO_PAR'], axis=1)
-            df['PLAYER'] = df['PLAYER'].str.replace('-','')
-            df.loc[(df.PLAYER == 'Cam Davis'),'PLAYER']='Cameron Davis'
-            df.loc[(df.PLAYER == 'K.H. Lee'),'PLAYER']='Kyoung-Hoon Lee'
-            df.loc[(df.PLAYER == 'Sebastián Muñoz'),'PLAYER']='Sebastian Munoz'
-            df.loc[(df.PLAYER == 'Nicolai Højgaard'),'PLAYER']='Nicolai Hojgaard'
-            df.loc[(df.PLAYER == 'Min-gyu Cho'),'PLAYER']='Mingyu Cho'
-            df.loc[(df.PLAYER == 'Pablo Larrazábal'),'PLAYER']='Pablo Larrazabal'
-            df.loc[(df.PLAYER == 'Si Woo Kim'),'PLAYER']='Siwoo Kim'
-            df.loc[(df.PLAYER == 'Séamus Power'),'PLAYER']='Seamus Power'
-            df.loc[(df.PLAYER == 'José María Olazábal'),'PLAYER']='Jose Maria Olazabal'
-            df.loc[(df.PLAYER == 'Alex Noren'),'PLAYER']='Alexander Noren'
-            df.loc[(df.PLAYER == 'Augusto Núñez'),'PLAYER']='Augusto Nunez'
-            #df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
-            df.loc[(df.PLAYER == 'Matti Schmid'),'PLAYER']='Matthias Schmid'
-            df.loc[(df.PLAYER == 'Nico Echavarria'),'PLAYER']='Nicolas Echavarria'
-            df.loc[(df.PLAYER == 'Paul Haley II'),'PLAYER']='Paul Haley'
-            df.loc[(df.PLAYER == 'Roberto Díaz'),'PLAYER']='Roberto Diaz'
-            df.loc[(df.PLAYER == 'Harold Varner III'),'PLAYER']='Harold Varner'
-            df.loc[(df.PLAYER == 'Rasmus Højgaard'),'PLAYER']='Rasmus Hojgaard'
-            df.loc[(df.PLAYER == 'Jordan Smith'),'PLAYER']='Jordan L. Smith'
-            df.loc[(df.PLAYER == 'Brandon Robinson Thompson'),'PLAYER']='Brandon Robinson-Thompson'
-            df.loc[(df.PLAYER == 'Alexander Björk'),'PLAYER']='Alexander Bjork'
-            df.loc[(df.PLAYER == 'Thorbjørn Olesen'),'PLAYER']='Thorbjorn Olesen'
+        df.to_sql('raw_scores',db,if_exists ='replace') #comment this in once espn link works
+        #df['POS'] = df['POS'].str.replace('T','')
+        df['PLAYER'] = df['PLAYER'].str.replace(r" \(.*\)","")
+        df['TO_PAR'] = df.apply(lambda x: x['THRU'] if x['THRU']=='WD' else x['TO_PAR'], axis=1)
+        df['PLAYER'] = df['PLAYER'].str.replace('-','')
+        df.loc[(df.PLAYER == 'Cam Davis'),'PLAYER']='Cameron Davis'
+        df.loc[(df.PLAYER == 'K.H. Lee'),'PLAYER']='Kyoung-Hoon Lee'
+        df.loc[(df.PLAYER == 'Sebastián Muñoz'),'PLAYER']='Sebastian Munoz'
+        df.loc[(df.PLAYER == 'Nicolai Højgaard'),'PLAYER']='Nicolai Hojgaard'
+        df.loc[(df.PLAYER == 'Min-gyu Cho'),'PLAYER']='Mingyu Cho'
+        df.loc[(df.PLAYER == 'Pablo Larrazábal'),'PLAYER']='Pablo Larrazabal'
+        df.loc[(df.PLAYER == 'Si Woo Kim'),'PLAYER']='Siwoo Kim'
+        df.loc[(df.PLAYER == 'Séamus Power'),'PLAYER']='Seamus Power'
+        df.loc[(df.PLAYER == 'José María Olazábal'),'PLAYER']='Jose Maria Olazabal'
+        df.loc[(df.PLAYER == 'Alex Noren'),'PLAYER']='Alexander Noren'
+        df.loc[(df.PLAYER == 'Augusto Núñez'),'PLAYER']='Augusto Nunez'
+        #df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
+        df.loc[(df.PLAYER == 'Matti Schmid'),'PLAYER']='Matthias Schmid'
+        df.loc[(df.PLAYER == 'Nico Echavarria'),'PLAYER']='Nicolas Echavarria'
+        df.loc[(df.PLAYER == 'Paul Haley II'),'PLAYER']='Paul Haley'
+        df.loc[(df.PLAYER == 'Roberto Díaz'),'PLAYER']='Roberto Diaz'
+        df.loc[(df.PLAYER == 'Harold Varner III'),'PLAYER']='Harold Varner'
+        df.loc[(df.PLAYER == 'Rasmus Højgaard'),'PLAYER']='Rasmus Hojgaard'
+        df.loc[(df.PLAYER == 'Jordan Smith'),'PLAYER']='Jordan L. Smith'
+        df.loc[(df.PLAYER == 'Brandon Robinson Thompson'),'PLAYER']='Brandon Robinson-Thompson'
+        df.loc[(df.PLAYER == 'Alexander Björk'),'PLAYER']='Alexander Bjork'
+        df.loc[(df.PLAYER == 'Thorbjørn Olesen'),'PLAYER']='Thorbjorn Olesen'
 
 
-            df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
+        df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
 
-            # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
-            #if datetime.now() > datetime(2023,5,19,5,0):
-            if df['TO_PAR'].str.contains('CUT').any():
-                #df_cut = df.sort_values('POS',ascending=False)
-                df = df[~df['PLAYER'].isnull()]
-                not_cut = df[df.POS != '-'] #remove everyone that has a POS as "-" aka those who were cut
-                # df_cut = df_cut[pd.notnull(df_cut['TO_PAR'])]
-                cut_score = int(not_cut['TO_PAR'][not_cut.index[-1]])+2
-                df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
-                df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
-                df['TO_PAR'] = df['TO_PAR'].replace('DQ',cut_score)
-            else:
-                df['TO_PAR']=df['TO_PAR'].str.replace('WD','0')
-                df['TO_PAR']=df['TO_PAR'].str.replace('DQ','0')
+        # if (datetime.today().weekday() > 4 or datetime.today().weekday() < 3):
+        #if datetime.now() > datetime(2023,5,19,5,0):
+        if df['TO_PAR'].str.contains('CUT').any():
+            #df_cut = df.sort_values('POS',ascending=False)
+            df = df[~df['PLAYER'].isnull()]
+            not_cut = df[(df['TO_PAR'] != 'CUT') & (df['TO_PAR'] != 'WD')] 
+            cut_score = int(not_cut['TO_PAR'][not_cut.index[-1]])+2
+            df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
+            df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
+            df['TO_PAR'] = df['TO_PAR'].replace('DQ',cut_score)
+        else:
+            df['TO_PAR']=df['TO_PAR'].str.replace('WD','0')
+            df['TO_PAR']=df['TO_PAR'].str.replace('DQ','0')
 
-            #df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
-            df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
-
-
-            if df.loc[0,'POS'] != df.loc[1,'POS']: #this substracts 3 if the leader is solo in the lead
-                df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
-
-            # if df.loc[4,'POS'] != df.loc[5,'POS']: #this substracts 3 if the leader is solo in the lead
-            #     df.loc[4,'TO_PAR']=df.loc[4,'TO_PAR']-3
+        #df['TO_PAR'] = df['TO_PAR'].str.replace('-','0')
+        df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
 
 
-            df = df.drop(['POS','THRU'],1)
-            df.to_sql('scores',db,if_exists ='replace')
-            db.execute('update datetime set last_run = ?',(datetime.today(),))
+        if df.loc[0,'POS'] != df.loc[1,'POS']: #this substracts 3 if the leader is solo in the lead
+            df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
+
+        # if df.loc[4,'POS'] != df.loc[5,'POS']: #this substracts 3 if the leader is solo in the lead
+        #     df.loc[4,'TO_PAR']=df.loc[4,'TO_PAR']-3
+
+
+        df = df.drop(['POS','THRU'],1)
+        df.to_sql('scores',db,if_exists ='replace')
+        db.execute('update datetime set last_run = ?',(datetime.today(),))
 
         df_scores = pd.read_sql_query('select * from scores',db)
         df_scores['PLAYER'] = df_scores['PLAYER'].str.split('[(]').str[0]
@@ -387,5 +358,4 @@ def scoreboard():
 @app.route('/rules', methods=['GET'])
 def rules():
     return render_template('rules.html')
-
 
