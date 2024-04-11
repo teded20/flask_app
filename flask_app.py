@@ -73,7 +73,9 @@ def index():
                 # Insert data into SQLite database
                 insert_data_into_database("flask_app.db", data)
                 # Update last API call timestamp
-                update_last_call_timestamp("flask_app.db", datetime.now())
+                current_datetime = datetime.now()
+                formatted_datetime = current_datetime.strftime("%Y-%m-%dT%H:%M:%S")
+                update_last_call_timestamp("flask_app.db",formatted_datetime)
                 print('Leaderboard updated successfully!')
             else:
                 print('Failed to update leaderboard.')
@@ -134,6 +136,9 @@ def index():
         df.loc[(df.PLAYER == 'Brandon Robinson Thompson'),'PLAYER']='Brandon Robinson-Thompson'
         df.loc[(df.PLAYER == 'Alexander Björk'),'PLAYER']='Alexander Bjork'
         df.loc[(df.PLAYER == 'Thorbjørn Olesen'),'PLAYER']='Thorbjorn Olesen'
+        df.loc[(df.PLAYER == 'Joaquín Niemann'),'PLAYER']='Joaquin Niemann'
+        df.loc[(df.PLAYER == 'Ludvig Åberg'),'PLAYER']='Ludvig Aberg'
+        df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
 
 
         df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
@@ -156,7 +161,7 @@ def index():
         df['TO_PAR'] = df['TO_PAR'].astype('float',errors='ignore')
 
 
-        if df.loc[0,'POS'] != df.loc[1,'POS']: #this substracts 3 if the leader is solo in the lead
+        if (df.loc[0,'POS'] != df.loc[1,'POS']) and (df.loc[0,'TO_PAR'] != df.loc[1,'TO_PAR']): #this substracts 3 if the leader is solo in the lead
             df.loc[0,'TO_PAR']=df.loc[0,'TO_PAR']-3
 
         # if df.loc[4,'POS'] != df.loc[5,'POS']: #this substracts 3 if the leader is solo in the lead

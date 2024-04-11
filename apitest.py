@@ -58,7 +58,7 @@ def insert_data_into_database(database_file, data):
                         (player["position"], player["player_id"], player["first_name"],
                         player["last_name"], player["country"], player["holes_played"],
                         player["current_round"], player["status"], player["strokes"],
-                        datetime.strptime(player["updated"], "%Y-%m-%dT%H:%M:%S.%f"),
+                        datetime.strptime(player["updated"], "%Y-%m-%dT%H:%M:%S%z"),
                         player["prize_money"], player["ranking_points"], player["total_to_par"]))
     conn.commit()
     conn.close()
@@ -78,7 +78,7 @@ def get_last_call_timestamp(database_file):
     result = cursor.fetchone()[0]
     conn.close()
     if result:
-        return datetime.strptime(result, "%Y-%m-%dT%H:%M:%S.%f")
+        return datetime.strptime(result, "%Y-%m-%dT%H:%M:%S")
     else:
         return None
 
@@ -113,7 +113,9 @@ def main():
             print("Data inserted into SQLite database successfully!")
 
             # Update last API call timestamp
-            update_last_call_timestamp(database_file, datetime.now())
+            current_datetime = datetime.now()
+            formatted_datetime = current_datetime.strftime("%Y-%m-%dT%H:%M:%S%z")
+            update_last_call_timestamp(database_file, formatted_datetime)
         else:
             print("Failed to fetch data from the API.")
     else:
