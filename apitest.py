@@ -58,7 +58,7 @@ def insert_data_into_database(database_file, data):
                         (player["position"], player["player_id"], player["first_name"],
                         player["last_name"], player["country"], player["holes_played"],
                         player["current_round"], player["status"], player["strokes"],
-                        datetime.strptime(player["updated"], "%Y-%m-%dT%H:%M:%S%z"),
+                        datetime.strptime(player["updated"], "%Y-%m-%dT%H:%M:%S.%f"),
                         player["prize_money"], player["ranking_points"], player["total_to_par"]))
     conn.commit()
     conn.close()
@@ -68,7 +68,7 @@ def can_call_api(last_call_timestamp):
     if last_call_timestamp is None:
         return True
     else:
-        return datetime.now() - last_call_timestamp > timedelta(minutes=5)
+        return datetime.now() - last_call_timestamp > timedelta(minutes=1)
 
 # Function to get the last API call timestamp from SQLite database
 def get_last_call_timestamp(database_file):
@@ -78,7 +78,7 @@ def get_last_call_timestamp(database_file):
     result = cursor.fetchone()[0]
     conn.close()
     if result:
-        return datetime.strptime(result, "%Y-%m-%d %H:%M:%S.%f")
+        return datetime.strptime(result, "%Y-%m-%dT%H:%M:%S.%f")
     else:
         return None
 
@@ -107,7 +107,7 @@ def main():
         if data:
             # Create SQLite database and table
             create_database_table(database_file)
-            
+
             # Insert data into SQLite database
             insert_data_into_database(database_file, data)
             print("Data inserted into SQLite database successfully!")

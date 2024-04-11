@@ -68,7 +68,7 @@ def index():
                 "X-RapidAPI-Key": "ec34e27eb0mshc4a776c20e717bfp127602jsn97ffbe5d0d3a",
                 "X-RapidAPI-Host": "golf-leaderboard-data.p.rapidapi.com"
             }
-            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/650", headers)
+            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/651", headers)
             if data:
                 # Insert data into SQLite database
                 insert_data_into_database("flask_app.db", data)
@@ -88,7 +88,7 @@ def index():
         df = df.rename(columns={"position": "POS","total_to_par":"TO_PAR","holes_played":"THRU"})
         df = df[['POS','PLAYER','TO_PAR','THRU']]
         df = df.sort_values(by='POS').reset_index(drop=True)
-        
+
         df_e = pd.read_sql_query('select * from inputs',db)
         total = len(df_e)
         df_e = df_e[['golfer1','golfer2','golfer3','golfer4','golfer5','golfer6']]
@@ -143,7 +143,7 @@ def index():
         if df['TO_PAR'].str.contains('CUT').any():
             #df_cut = df.sort_values('POS',ascending=False)
             df = df[~df['PLAYER'].isnull()]
-            not_cut = df[(df['TO_PAR'] != 'CUT') & (df['TO_PAR'] != 'WD')] 
+            not_cut = df[(df['TO_PAR'] != 'CUT') & (df['TO_PAR'] != 'WD')]
             cut_score = int(not_cut['TO_PAR'][not_cut.index[-1]])+2
             df['TO_PAR'] = df['TO_PAR'].replace('CUT',cut_score)
             df['TO_PAR'] = df['TO_PAR'].replace('WD',cut_score)
