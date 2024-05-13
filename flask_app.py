@@ -6,8 +6,9 @@ import sqlite3 as sql
 from datetime import datetime,timedelta
 from flask import Flask, request, session, g, redirect, url_for,render_template, flash
 from apitest import fetch_leaderboard_data, insert_data_into_database, can_call_api, get_last_call_timestamp, update_last_call_timestamp
+from dateutil import parser
 
-golive = datetime(2024,4,11,5,0)
+golive = datetime(2024,5,16,5,0)
 
 app = Flask(__name__)
 

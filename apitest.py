@@ -2,6 +2,7 @@ import sqlite3
 import requests
 from datetime import datetime, timedelta
 import os
+from dateutil import parser
 
 # Function to fetch data from the API
 # def fetch_leaderboard_data(api_url,headers):
@@ -58,7 +59,7 @@ def insert_data_into_database(database_file, data):
                         (player["position"], player["player_id"], player["first_name"],
                         player["last_name"], player["country"], player["holes_played"],
                         player["current_round"], player["status"], player["strokes"],
-                        datetime.strptime(player["updated"], "%Y-%m-%dT%H:%M:%S%z"),
+                        parser.parse(player["updated"]),
                         player["prize_money"], player["ranking_points"], player["total_to_par"]))
     conn.commit()
     conn.close()
@@ -114,7 +115,7 @@ def main():
 
             # Update last API call timestamp
             current_datetime = datetime.now()
-            formatted_datetime = current_datetime.strftime("%Y-%m-%dT%H:%M:%S%z")
+            formatted_datetime = current_datetime.strftime("%Y-%m-%dT%H:%M:%S")
             update_last_call_timestamp(database_file, formatted_datetime)
         else:
             print("Failed to fetch data from the API.")
