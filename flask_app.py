@@ -69,7 +69,7 @@ def index():
                 "X-RapidAPI-Key": "ec34e27eb0mshc4a776c20e717bfp127602jsn97ffbe5d0d3a",
                 "X-RapidAPI-Host": "golf-leaderboard-data.p.rapidapi.com"
             }
-            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/651", headers)
+            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/658", headers)
             if data:
                 # Insert data into SQLite database
                 insert_data_into_database("flask_app.db", data)
@@ -299,8 +299,6 @@ def admin():
 def add_entry():
     if datetime.today() < golive:
         db = get_db()
-
-
 
         cur = db.execute('select PLAYER from golfers')
         df_top20 = pd.DataFrame(cur.fetchall(),columns=['name'])
