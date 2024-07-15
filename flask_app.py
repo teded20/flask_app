@@ -8,7 +8,7 @@ from flask import Flask, request, session, g, redirect, url_for,render_template,
 from apitest import fetch_leaderboard_data, insert_data_into_database, can_call_api, get_last_call_timestamp, update_last_call_timestamp
 from dateutil import parser
 
-golive = datetime(2024,6,13,5,0)
+golive = datetime(2024,7,18,5,0)
 
 app = Flask(__name__)
 
@@ -69,7 +69,7 @@ def index():
                 "X-RapidAPI-Key": "ec34e27eb0mshc4a776c20e717bfp127602jsn97ffbe5d0d3a",
                 "X-RapidAPI-Host": "golf-leaderboard-data.p.rapidapi.com"
             }
-            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/662", headers)
+            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/701", headers)
             if data:
                 # Insert data into SQLite database
                 insert_data_into_database("flask_app.db", data)
