@@ -93,7 +93,7 @@ def update_last_call_timestamp(database_file, timestamp):
 
 # Main function to orchestrate the process
 def main():
-    api_url = "https://golf-leaderboard-data.p.rapidapi.com/leaderboard/701"  # Replace with your actual API URL
+    api_url = "https://golf-leaderboard-data.p.rapidapi.com/leaderboard/668"  # Replace with your actual API URL
     headers = {
         "X-RapidAPI-Key": "ec34e27eb0mshc4a776c20e717bfp127602jsn97ffbe5d0d3a",
         "X-RapidAPI-Host": "golf-leaderboard-data.p.rapidapi.com"

@@ -69,7 +69,7 @@ def index():
                 "X-RapidAPI-Key": "ec34e27eb0mshc4a776c20e717bfp127602jsn97ffbe5d0d3a",
                 "X-RapidAPI-Host": "golf-leaderboard-data.p.rapidapi.com"
             }
-            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/701", headers)
+            data = fetch_leaderboard_data("https://golf-leaderboard-data.p.rapidapi.com/leaderboard/668", headers)
             if data:
                 # Insert data into SQLite database
                 insert_data_into_database("flask_app.db", data)
@@ -91,9 +91,9 @@ def index():
         df = df.rename(columns={"position": "POS","total_to_par":"TO_PAR","holes_played":"THRU"})
         df = df[['POS','PLAYER','TO_PAR','THRU']]
         df = df.sort_values(by='POS').reset_index(drop=True)
-        
-        new_row = {"POS": 157,"PLAYER": "Jon Rahm", "TO_PAR": "WD", "THRU": 0}
-        df= df.append(new_row, ignore_index=True)
+
+        #new_row = {"POS": 157,"PLAYER": "Jon Rahm", "TO_PAR": "WD", "THRU": 0}
+        #df= df.append(new_row, ignore_index=True)
 
         df_e = pd.read_sql_query('select * from inputs',db)
         total = len(df_e)
@@ -144,6 +144,9 @@ def index():
         df.loc[(df.PLAYER == 'Ludvig Åberg'),'PLAYER']='Ludvig Aberg'
         df.loc[(df.PLAYER == 'Byeong Hun An'),'PLAYER']='Byeong-Hun An'
         df.loc[(df.PLAYER == 'Matthew Fitzpatrick'),'PLAYER']='Matt Fitzpatrick'
+        df.loc[(df.PLAYER == 'Cam Smith'),'PLAYER']='Cameron Smith'
+        df.loc[(df.PLAYER == 'Altin Van Der'),'PLAYER']='Altin Van Der Merwe'
+        df.loc[(df.PLAYER == 'Sebastian Söderberg'),'PLAYER']='Sebastian Soderberg'
 
 
         df['TO_PAR']=df['TO_PAR'].str.replace('E','0')
