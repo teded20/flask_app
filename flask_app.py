@@ -92,8 +92,8 @@ def index():
         df = df[['POS','PLAYER','TO_PAR','THRU']]
         df = df.sort_values(by='POS').reset_index(drop=True)
 
-        #new_row = {"POS": 157,"PLAYER": "Jon Rahm", "TO_PAR": "WD", "THRU": 0}
-        #df= df.append(new_row, ignore_index=True)
+        new_row = {"POS": 157,"PLAYER": "Sebastian Soderberg ", "TO_PAR": "WD", "THRU": 0}
+        df= df.append(new_row, ignore_index=True)
 
         df_e = pd.read_sql_query('select * from inputs',db)
         total = len(df_e)
